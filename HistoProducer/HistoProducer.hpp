@@ -27,10 +27,13 @@
 
 class HistoProducer : public TSelector {
 public :
+   // Generally needed datatypes
    TTreeReader     fReader;  //!the tree reader
    TTree          *fChain = 0;   //!pointer to the analyzed TTree or TChain
    TFile*          output = 0;
    TString         name = "";
+   
+   // Containers for storage of important information
    std::vector<std::unique_ptr<TH1D>> histograms;
    std::vector<TString> variables;
    std::vector<TString> variable_types;
@@ -41,9 +44,12 @@ public :
    TTreeReaderValue<Float_t> Evt_Pt_MET = {fReader, "Evt_Pt_MET"};
    TTreeReaderArray<Float_t> Neutralino_Pt = {fReader, "Neutralino_Pt"};
    
-   //std::vector<TTreeReaderArray<Float_t>> float_values;
-   //std::vector<TTreeReaderArray<Long64_t>> int_values;
+   std::vector<TTreeReaderValue<Float_t>> float_values;
+   std::vector<TTreeReaderArray<Float_t>> float_arrays;
+   std::vector<TTreeReaderValue<Long64_t>> int_values;
+   std::vector<TTreeReaderArray<Long64_t>> int_arrays;
 
+   // all functions from TSelector
    HistoProducer(TTree * /*tree*/ =0) { }
    virtual ~HistoProducer() { }
    virtual Int_t   Version() const { return 2; }
@@ -60,8 +66,13 @@ public :
    virtual void    SlaveTerminate();
    virtual void    Terminate();
    
+   // Custom functions
    void AddVariable(TString variable);
-
+   void PrintVariables() const;
+   void AddWeight(TString weight);
+   void PrintWeights() const;
+   void AddUncertainty(TString uncertainty);
+   void PrintUncertainties() const;
    //ClassDef(HistoProducer,0);
 
 };

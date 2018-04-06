@@ -46,11 +46,11 @@ void HistoProducer::SlaveBegin(TTree * /*tree*/)
 
    TString option = GetOption();
    for(const auto& variable : variables){
-        std::unique_ptr<TH1D> histogram;
-        histogram.reset(new TH1D(variable,variable,20,0,0));
-        histogram->Sumw2();
-        GetOutputList()->Add(histogram.get());
-        histograms.push_back(std::move(histogram));
+        //std::unique_ptr<TH1D> histogram;
+        //histogram.reset(new TH1D(variable,variable,20,0,0));
+        //histogram->Sumw2();
+        //GetOutputList()->Add(histogram.get());
+        //histograms.push_back(std::move(histogram));
         if(fChain->GetBranch(variable)->GetLeaf(variable)->GetLeafCount()!=nullptr){
             variable_types.push_back(TString(fChain->GetBranch(variable)->GetLeaf(variable)->GetTypeName())+"|Array");
         }
@@ -58,6 +58,7 @@ void HistoProducer::SlaveBegin(TTree * /*tree*/)
             variable_types.push_back(TString(fChain->GetBranch(variable)->GetLeaf(variable)->GetTypeName())+"|Value");
         }
    }
+   
 
 }
 
@@ -108,4 +109,34 @@ void HistoProducer::AddVariable(TString variable)
 {
     variables.push_back(variable);
     
+}
+void HistoProducer::PrintVariables() const
+{
+   std::cout << "Registered Variables: " << std::endl;
+   for(const auto& variable : variables){
+       std::cout << variable << std::endl;
+   }
+}
+void HistoProducer::AddWeight(TString weight)
+{
+    weights.push_back(weight);
+
+}
+void HistoProducer::PrintWeights() const
+{
+    std::cout << "Registered Weights: " << std::endl;
+    for(const auto& weight : weights){
+        std::cout << weight << std::endl;
+    }
+}
+void HistoProducer::AddUncertainty(TString uncertainty)
+{
+    uncertainties.push_back(uncertainty);
+}
+void HistoProducer::PrintUncertainties() const
+{
+    std::cout << "Registered Uncertainties: " << std::endl;
+    for(const auto& uncertainty : uncertainties){
+        std::cout << uncertainty << std::endl;
+    }
 }
