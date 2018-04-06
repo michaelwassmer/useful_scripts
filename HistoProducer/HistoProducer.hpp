@@ -39,6 +39,7 @@ public :
    std::vector<TString> variable_types;
    std::vector<TString> weights;
    std::vector<TString> uncertainties;
+   std::vector<TString> uncertainty_types;
 
    // Readers to access the data (delete the ones you do not need).
    TTreeReaderValue<Float_t> Evt_Pt_MET = {fReader, "Evt_Pt_MET"};
@@ -71,7 +72,7 @@ public :
    void PrintVariables() const;
    void AddWeight(TString weight);
    void PrintWeights() const;
-   void AddUncertainty(TString uncertainty);
+   void AddUncertainty(TString uncertainty,TString type);
    void PrintUncertainties() const;
    //ClassDef(HistoProducer,0);
 

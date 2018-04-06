@@ -10,9 +10,11 @@ test.AddVariable("Neutralino_Pt");
 test.PrintVariables();
 test.AddWeight("Weight_XS");
 test.AddWeight("Weight_CSV");
+test.AddWeight("Jet_Pt");
 test.PrintWeights();
-test.AddUncertainty("Weight_CSVLF");
-test.AddUncertainty("Weight_CSVHF");
+test.AddUncertainty("Weight_CSVLF","Weight");
+test.AddUncertainty("JES","Template");
+test.AddUncertainty("JER","Templatee");
 test.PrintUncertainties();
 return 0;
 

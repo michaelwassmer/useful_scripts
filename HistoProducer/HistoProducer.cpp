@@ -119,8 +119,13 @@ void HistoProducer::PrintVariables() const
 }
 void HistoProducer::AddWeight(TString weight)
 {
+    auto weight_name = weight;
+    weight_name.ToLower();
+    if(not weight_name.Contains("weight")){
+        std::cerr << "invalid weight " << weight << ", skipping ..." << std::endl;
+        return;
+    }
     weights.push_back(weight);
-
 }
 void HistoProducer::PrintWeights() const
 {
@@ -129,14 +134,19 @@ void HistoProducer::PrintWeights() const
         std::cout << weight << std::endl;
     }
 }
-void HistoProducer::AddUncertainty(TString uncertainty)
+void HistoProducer::AddUncertainty(TString uncertainty,TString type)
 {
+    if(type!="Weight"&&type!="Template"){
+        std::cerr << "invalid type " << type << " for uncertainty " << uncertainty << ", skipping ..." << std::endl;
+        return;
+    }
     uncertainties.push_back(uncertainty);
+    uncertainty_types.push_back(type);
 }
 void HistoProducer::PrintUncertainties() const
 {
     std::cout << "Registered Uncertainties: " << std::endl;
-    for(const auto& uncertainty : uncertainties){
-        std::cout << uncertainty << std::endl;
+    for(size_t i=0;i<uncertainties.size();i++){
+        std::cout << "Name: " << uncertainties[i] << " Type: " << uncertainty_types[i] << std::endl;
     }
 }
