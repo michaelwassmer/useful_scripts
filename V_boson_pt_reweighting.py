@@ -4,6 +4,18 @@ from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
 
+def FindAllMothers(particle):
+    mother_ids = []
+    print "particle id ",particle.pdgId()
+    print "# mothers ",particle.numberOfMothers()
+    for i in range(particle.numberOfMothers()):
+        print "mother id ",particle.mother(i).pdgId()
+        mother_ids.append(particle.mother(i).pdgId())
+        next_mothers_ids = FindAllMothers(particle.mother(i))
+        for next_mother_id in next_mothers_ids:
+            mother_ids.append(next_mother_id)
+    return mother_ids
+
 boson=str(sys.argv[1])
 postfix=str(sys.argv[2])
 filename = sys.argv[3]
@@ -61,7 +73,7 @@ for event in events:
         print count
     #if count>10000:
         #break
-    #print "----------------------------------------------------------------"
+    print "----------------------------------------------------------------"
     event.getByLabel (labelPacked, handlePacked)
     event.getByLabel (labelPruned, handlePruned)
     event.getByLabel (labelWeight, eventinfo)
@@ -93,10 +105,28 @@ for event in events:
             exit()
     if len(decay_prods)!=2:
         print "v boson could not be determined"
-        continue
+        for p in pruned:
+            if p.status()!=1:
+                continue
+            if not (abs(p.pdgId())==12 or abs(p.pdgId())==14 or abs(p.pdgId())==16):
+                continue
+            #if not (abs(p.mother().pdgId())==12 or abs(p.mother().pdgId())==14 or abs(p.mother().pdgId())==16):
+                #continue
+            mother_ids = FindAllMothers(p)
+            print mother_ids
+            is_from_hadron_decay = False
+            for mother_id in mother_ids:
+                if (abs(mother_id)>40 and mother_id!=2212):
+                    is_from_hadron_decay = True
+                    break
+            if is_from_hadron_decay:
+                continue
+            decay_prods.append(p.p4())
+        print "decay products ",len(decay_prods)
+        print "boson mass: ",(decay_prods[0]+decay_prods[1]).mass()
+        #continue
     v_boson = decay_prods[0]+decay_prods[1]
     v_boson_pt = v_boson.pt()
-    #print z_boson_pt,weight
     v_boson_pt_hist.Fill(v_boson_pt,weight*weight_xs/1000.)
     count+=1
     
