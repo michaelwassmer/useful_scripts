@@ -69,11 +69,12 @@ print "weight_xs = ",weight_xs
 # loop over events
 count= 0
 for event in events:
+    count+=1
     if count % 10000 == 0:
         print count
     #if count>10000:
         #break
-    print "----------------------------------------------------------------"
+    #print "----------------------------------------------------------------"
     event.getByLabel (labelPacked, handlePacked)
     event.getByLabel (labelPruned, handlePruned)
     event.getByLabel (labelWeight, eventinfo)
@@ -84,26 +85,51 @@ for event in events:
     decay_prods = []
     for p in pruned:
         if boson=="Z":
-            if p.pdgId()!=23:
+            if abs(p.pdgId())!=23:
                 continue
             #print "found Z boson"
             for i in range(p.numberOfDaughters()):
                 daughter = p.daughter(i)
-                if daughter.status()!=1:
+                #if daughter.status()!=1:
                     #print "not stable"
-                    continue
+                    #continue
                 if not (abs(daughter.pdgId())==12 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==16):
                     #print "no neutrino"
                     continue
                 #print "found neutrino"
-                decay_prods.append(daughter.p4())
+                decay_prods.append(daughter)
         elif boson=="W":
-            print "not yet implemented"
-            exit()
+            if abs(p.pdgId())!=24:
+                #print "no W boson found "
+                continue
+            #print "found Z boson"
+            for i in range(p.numberOfDaughters()):
+                daughter = p.daughter(i)
+                #if daughter.status()!=1:
+                    #print "not stable"
+                    #continue
+                if not (abs(daughter.pdgId())==11 or abs(daughter.pdgId())==12 or abs(daughter.pdgId())==13 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16):
+                    #print "no neutrino"
+                    continue
+                #print "found neutrino"
+                decay_prods.append(daughter)
         else:
             print "only W or Z boson allowed"
             exit()
     if len(decay_prods)!=2:
+        #print "more than two decay prods ",len(decay_prods)
+        continue
+    if boson=="Z":
+        if decay_prods[0].pdgId()+decay_prods[1].pdgId()!=0:
+            continue
+    elif boson=="W":
+        if decay_prods[0].pdgId()*decay_prods[1].pdgId()>=0 or abs(abs(decay_prods[0].pdgId())-abs(decay_prods[1].pdgId()))!=1:
+            #print "W conditions not satisfied "
+            continue
+    else:
+        print "only W or Z boson allowed"
+        exit()
+        """
         print "v boson could not be determined"
         for p in pruned:
             if p.status()!=1:
@@ -124,11 +150,10 @@ for event in events:
             decay_prods.append(p.p4())
         print "decay products ",len(decay_prods)
         print "boson mass: ",(decay_prods[0]+decay_prods[1]).mass()
-        #continue
-    v_boson = decay_prods[0]+decay_prods[1]
+        """
+    v_boson = decay_prods[0].p4()+decay_prods[1].p4()
     v_boson_pt = v_boson.pt()
     v_boson_pt_hist.Fill(v_boson_pt,weight*weight_xs/1000.)
-    count+=1
     
 file_.WriteTObject(v_boson_pt_hist)
 file_.Close()
