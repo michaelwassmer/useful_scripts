@@ -116,7 +116,7 @@ for event in events:
                     #print "not stable"
                     #continue
                 # check if the daughters are neutrinos or charged leptons
-                if not (abs(daughter.pdgId())==11 or abs(daughter.pdgId())==12 or abs(daughter.pdgId())==13 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16):
+                if not (abs(daughter.pdgId())==11 or abs(daughter.pdgId())==12 or abs(daughter.pdgId())==13 or abs(daughter.pdgId())==14):# or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
                     #print "no neutrino"
                     continue
                 #print "found neutrino"
