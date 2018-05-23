@@ -29,10 +29,12 @@ labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
 
+# binning according to https://arxiv.org/pdf/1705.04664.pdf
 binning = [30,40,50,60,70,80,90,100,110,120,130,140,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2200,2400,2600,2800,3000,6500]
 v_boson_pt_hist = ROOT.TH1D(boson+"_boson_pt",boson+"_boson_pt",len(binning)-1,array('d',binning))
 file_ = ROOT.TFile(boson+"_boson_pt_"+postfix+".root","RECREATE")
 
+# cross section weights according to sm_backgrounds.csv combined with 3 neutrino flavors and NNLO K factor from XS database
 weight_xs = 1.
 if boson=="Z":
     if "50To100" in filename:
@@ -85,29 +87,35 @@ for event in events:
     decay_prods = []
     for p in pruned:
         if boson=="Z":
+            # check for pdgid of Z boson
             if abs(p.pdgId())!=23:
                 continue
             #print "found Z boson"
+            # loop over direct daughters of Z boson
             for i in range(p.numberOfDaughters()):
                 daughter = p.daughter(i)
                 #if daughter.status()!=1:
                     #print "not stable"
                     #continue
+                # check if the daughters are neutrinos
                 if not (abs(daughter.pdgId())==12 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==16):
                     #print "no neutrino"
                     continue
                 #print "found neutrino"
                 decay_prods.append(daughter)
         elif boson=="W":
+            # check for pdgid of W boson
             if abs(p.pdgId())!=24:
                 #print "no W boson found "
                 continue
-            #print "found Z boson"
+            #print "found W boson"
+            # loop over direct daughters of W boson
             for i in range(p.numberOfDaughters()):
                 daughter = p.daughter(i)
                 #if daughter.status()!=1:
                     #print "not stable"
                     #continue
+                # check if the daughters are neutrinos or charged leptons
                 if not (abs(daughter.pdgId())==11 or abs(daughter.pdgId())==12 or abs(daughter.pdgId())==13 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16):
                     #print "no neutrino"
                     continue
@@ -116,19 +124,23 @@ for event in events:
         else:
             print "only W or Z boson allowed"
             exit()
+    # fail-safe: check if the number of found daughters is exactly 2 as one would expect
     if len(decay_prods)!=2:
         #print "more than two decay prods ",len(decay_prods)
         continue
     if boson=="Z":
+        # fail-safe: check if the daughters of the Z boson are particle and anti-particle as well as same lepton flavor
         if decay_prods[0].pdgId()+decay_prods[1].pdgId()!=0:
             continue
     elif boson=="W":
+        # fail-safe: check if the daughters of the W boson are particle and anti-particle as well as same lepton flavor
         if decay_prods[0].pdgId()*decay_prods[1].pdgId()>=0 or abs(abs(decay_prods[0].pdgId())-abs(decay_prods[1].pdgId()))!=1:
             #print "W conditions not satisfied "
             continue
     else:
         print "only W or Z boson allowed"
         exit()
+        # if v boson cannot be determined one could try the following:
         """
         print "v boson could not be determined"
         for p in pruned:
