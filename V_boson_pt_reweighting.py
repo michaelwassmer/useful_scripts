@@ -3,6 +3,7 @@ import sys
 from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
+#ROOT.gSystem.Load('libGenVector')
 
 def FindAllMothers(particle):
     mother_ids = []
@@ -85,42 +86,47 @@ for event in events:
     pruned = handlePruned.product()
     weight = eventinfo.product().weight()
     decay_prods = []
+    radiated_photons = []
     for p in pruned:
         if boson=="Z":
             # check for pdgid of Z boson
-            if abs(p.pdgId())!=23:
-                continue
+            #if abs(p.pdgId())!=23:
+                #continue
             #print "found Z boson"
             # loop over direct daughters of Z boson
-            for i in range(p.numberOfDaughters()):
-                daughter = p.daughter(i)
+            #for i in range(p.numberOfDaughters()):
+                #daughter = p.daughter(i)
                 #if daughter.status()!=1:
                     #print "not stable"
                     #continue
                 # check if the daughters are neutrinos
-                if not (abs(daughter.pdgId())==12 or abs(daughter.pdgId())==14 or abs(daughter.pdgId())==16):
-                    #print "no neutrino"
-                    continue
-                #print "found neutrino"
-                decay_prods.append(daughter)
-        elif boson=="W":
-            # check for pdgid of W boson
-            if abs(p.pdgId())!=24:
-                #print "no W boson found "
+            if not ((abs(p.pdgId())==12 or abs(p.pdgId())==14 or abs(p.pdgId())==16) and p.isPromptFinalState()):
+                #print "no neutrino"
                 continue
+                #print "found neutrino"
+            decay_prods.append(p)
+        elif boson=="W":
+            # need to save stable photons to calculate dressed leptons later
+            if abs(p.pdgId())==22 and p.status()==1 and (not p.statusFlags().isPrompt()):
+                radiated_photons.append(p)
+                continue
+            # check for pdgid of W boson
+            #if abs(p.pdgId())!=24:
+                #print "no W boson found "
+                #continue
             #print "found W boson"
             # loop over direct daughters of W boson
-            for i in range(p.numberOfDaughters()):
-                daughter = p.daughter(i)
+            #for i in range(p.numberOfDaughters()):
+                #daughter = p.daughter(i)
                 #if daughter.status()!=1:
                     #print "not stable"
                     #continue
                 # check if the daughters are neutrinos or charged leptons
-                if not (abs(daughter.pdgId())==11 or abs(daughter.pdgId())==12 or abs(daughter.pdgId())==13 or abs(daughter.pdgId())==14):# or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
-                    #print "no neutrino"
-                    continue
-                #print "found neutrino"
-                decay_prods.append(daughter)
+            if not ((abs(p.pdgId())==11 or abs(p.pdgId())==12 or abs(p.pdgId())==13 or abs(p.pdgId())==14) and p.isPromptFinalState()):# or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
+                #print "no neutrino"
+                continue
+            #print "found neutrino"
+            decay_prods.append(p)
         else:
             print "only W or Z boson allowed"
             exit()
@@ -137,6 +143,13 @@ for event in events:
         if decay_prods[0].pdgId()*decay_prods[1].pdgId()>=0 or abs(abs(decay_prods[0].pdgId())-abs(decay_prods[1].pdgId()))!=1:
             #print "W conditions not satisfied "
             continue
+        # add radiated photons back to lepton
+        for decay_prod in decay_prods:
+            if abs(decay_prod.pdgId())==11 or abs(decay_prod.pdgId())==13:
+                for photon in radiated_photons:
+                    if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(),photon.p4()))<0.1:
+                        decay_prod.setP4(decay_prod.p4()+photon.p4())
+                
     else:
         print "only W or Z boson allowed"
         exit()
