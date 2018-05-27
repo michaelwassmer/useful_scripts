@@ -33,6 +33,7 @@ labelWeight = "generator"
 # binning according to https://arxiv.org/pdf/1705.04664.pdf
 binning = [30,40,50,60,70,80,90,100,110,120,130,140,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2200,2400,2600,2800,3000,6500]
 v_boson_pt_hist = ROOT.TH1D(boson+"_boson_pt",boson+"_boson_pt",len(binning)-1,array('d',binning))
+v_boson_pt_hist.Sumw2()
 file_ = ROOT.TFile(boson+"_boson_pt_"+postfix+".root","RECREATE")
 
 # cross section weights according to sm_backgrounds.csv combined with 3 neutrino flavors and NNLO K factor from XS database
@@ -182,5 +183,5 @@ for event in events:
     
 file_.WriteTObject(v_boson_pt_hist)
 file_.Close()
-    
+print "finished"    
                 
