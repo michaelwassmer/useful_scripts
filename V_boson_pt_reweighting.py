@@ -17,6 +17,18 @@ def FindAllMothers(particle):
             mother_ids.append(next_mother_id)
     return mother_ids
 
+scales = {  #"nominal" : 1000,
+            "Weight_scale_variation_muR_1p0_muF_1p0" : 1001,
+            "Weight_scale_variation_muR_1p0_muF_2p0" : 1002,
+            "Weight_scale_variation_muR_1p0_muF_0p5" : 1003,
+            "Weight_scale_variation_muR_2p0_muF_1p0" : 1004,
+            "Weight_scale_variation_muR_2p0_muF_2p0" : 1005,
+            "Weight_scale_variation_muR_2p0_muF_0p5" : 1006,
+            "Weight_scale_variation_muR_0p5_muF_1p0" : 1007,
+            "Weight_scale_variation_muR_0p5_muF_2p0" : 1008,
+            "Weight_scale_variation_muR_0p5_muF_0p5" : 1009
+        }
+
 boson=str(sys.argv[1])
 postfix=str(sys.argv[2])
 filename = sys.argv[3]
@@ -26,15 +38,23 @@ events = Events (filename)
 handlePruned  = Handle ("std::vector<reco::GenParticle>")
 handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle('GenEventInfoProduct')
+lheinfo = Handle('LHEEventProduct')
 labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
+labelLHE = "externalLHEProducer"
 
 # binning according to https://arxiv.org/pdf/1705.04664.pdf
 binning = [30,40,50,60,70,80,90,100,110,120,130,140,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2200,2400,2600,2800,3000,6500]
 v_boson_pt_hist = ROOT.TH1D(boson+"_boson_pt",boson+"_boson_pt",len(binning)-1,array('d',binning))
 v_boson_pt_hist.Sumw2()
 file_ = ROOT.TFile(boson+"_boson_pt_"+postfix+".root","RECREATE")
+
+# list of histograms for scale variations
+v_boson_pt_hists = {}
+for scale in scales:
+    v_boson_pt_hists[scale]=ROOT.TH1D(boson+"_boson_pt_"+scale,boson+"_boson_pt_"+scale,len(binning)-1,array('d',binning))
+    v_boson_pt_hists[scale].Sumw2()
 
 # cross section weights according to sm_backgrounds.csv combined with 3 neutrino flavors and NNLO K factor from XS database
 weight_xs = 1.
@@ -82,10 +102,12 @@ for event in events:
     event.getByLabel (labelPacked, handlePacked)
     event.getByLabel (labelPruned, handlePruned)
     event.getByLabel (labelWeight, eventinfo)
+    event.getByLabel (labelLHE , lheinfo)
     # get the product
     packed = handlePacked.product()
     pruned = handlePruned.product()
     weight = eventinfo.product().weight()
+    lhe_weight = lheinfo.product().originalXWGTUP()
     decay_prods = []
     radiated_photons = []
     for p in pruned:
@@ -180,8 +202,21 @@ for event in events:
     v_boson = decay_prods[0].p4()+decay_prods[1].p4()
     v_boson_pt = v_boson.pt()
     v_boson_pt_hist.Fill(v_boson_pt,weight*weight_xs/1000.)
+    # fill histograms for scale variations
+    for scale in scales:
+        #print scale
+        #print scales[scale]
+        for i in range(lheinfo.product().weights().size()):
+            #print lheinfo.product().weights().at(i).id
+            if int(lheinfo.product().weights().at(i).id) == int(scales[scale]):
+                scale_weight = lheinfo.product().weights().at(i).wgt
+                #print scale_weight
+                v_boson_pt_hists[scale].Fill(v_boson_pt,weight*weight_xs/1000.*scale_weight/lhe_weight)
+                break
     
 file_.WriteTObject(v_boson_pt_hist)
+for scale in scales:
+    file_.WriteTObject(v_boson_pt_hists[scale])
 file_.Close()
 print "finished"    
                 
