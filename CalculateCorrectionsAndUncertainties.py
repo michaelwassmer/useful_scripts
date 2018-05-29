@@ -54,11 +54,6 @@ test = sigma_TH("NNLO","NLO",[0.,0.,0.],[0.,0.,0.],0.)
 
 output_hists = [sigma_TH("NNLO","NLO",[e_QCD1,e_QCD2,e_QCD3],[e_EW1,e_EW2,e_EW3],e_MIX) for e_QCD1 in [1,0,-1] for e_QCD2 in [1,0,-1] for e_QCD3 in [1,0,-1] for e_EW1 in [1,0,-1] for e_EW2 in [1,0,-1] for e_EW3 in [1,0,-1] for e_MIX in [1,0,-1]]
 print len(output_hists)
-c = ROOT.TCanvas()
-
-test.Draw("histe")
-
-c.SaveAs("test.pdf")
 
 for hist in output_hists:
     output.WriteTObject(hist)

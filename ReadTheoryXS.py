@@ -16,6 +16,7 @@ with open(filename) as f:
             #line_as_list = line.split(' ')
             histname = line_as_list[3].replace('\n','')
             histo = ROOT.TH1D(histname,histname,len(binning)-1,array('d',binning))
+            histo.Sumw2()
             continue
         if "END HISTO1D" in line:
             print histo.Integral()
