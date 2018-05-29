@@ -45,9 +45,12 @@ def sigma_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
     str_MIX+=str_dict[e_MIX]
     sigma_TH.SetName(process+"_"+QCD_ORDER+"_"+EW_ORDER+"_"+str_QCD+"_"+str_EW+"_"+str_MIX)
     sigma_TH.SetTitle(process+"_"+QCD_ORDER+"_"+EW_ORDER+"_"+str_QCD+"_"+str_EW+"_"+str_MIX)
+    # scale the theory prediction with 2 if the process is W->lv since the theory histograms only include one flavor (e or mu)
+    if process=="evj":
+        sigma_TH.Scale(2.)
     return sigma_TH
 
-output = ROOT.TFile("TheoryXS"+process+".root","RECREATE")
+output = ROOT.TFile("TheoryXS_"+process+".root","RECREATE")
 
 
 test = sigma_TH("NNLO","NLO",[0.,0.,0.],[0.,0.,0.],0.)
@@ -55,7 +58,21 @@ test = sigma_TH("NNLO","NLO",[0.,0.,0.],[0.,0.,0.],0.)
 output_hists = [sigma_TH("NNLO","NLO",[e_QCD1,e_QCD2,e_QCD3],[e_EW1,e_EW2,e_EW3],e_MIX) for e_QCD1 in [1,0,-1] for e_QCD2 in [1,0,-1] for e_QCD3 in [1,0,-1] for e_EW1 in [1,0,-1] for e_EW2 in [1,0,-1] for e_EW3 in [1,0,-1] for e_MIX in [1,0,-1]]
 print len(output_hists)
 
+
+file_mc=None
+hist_mc=None
+if process=="vvj":
+    file_mc = ROOT.TFile.Open("root_files/Z_boson_pt.root")
+    hist_mc = file_mc.Get("Z_boson_pt")
+elif process=="evj":
+    file_mc = ROOT.TFile.Open("root_files/W_boson_pt.root")
+    hist_mc = file_mc.Get("W_boson_pt")
+else:
+    print "wrong option"
+    exit()
+
 for hist in output_hists:
+    hist.Divide(hist_mc)
     output.WriteTObject(hist)
 
 output.Close()
