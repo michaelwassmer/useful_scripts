@@ -47,7 +47,7 @@ def sigma_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
     sigma_TH.SetTitle(process+"_"+QCD_ORDER+"_"+EW_ORDER+"_"+str_QCD+"_"+str_EW+"_"+str_MIX)
     return sigma_TH
 
-output = ROOT.TFile("TheoryXS.root","RECREATE")
+output = ROOT.TFile("TheoryXS"+process+".root","RECREATE")
 
 
 test = sigma_TH("NNLO","NLO",[0.,0.,0.],[0.,0.,0.],0.)

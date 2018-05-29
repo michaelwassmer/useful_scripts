@@ -39,8 +39,8 @@ with open(filename) as f:
         print "bin width: ",bin_width
         if "K_" in histname or "kappa_" in histname:
             histo.SetBinContent(bin_number,bin_content)
-            histo.SetBinError(bin_number,bin_error)
+            #histo.SetBinError(bin_number,bin_error)
         else:
             histo.SetBinContent(bin_number,bin_content*bin_width)
-            histo.SetBinError(bin_number,bin_error*bin_width)
+            #histo.SetBinError(bin_number,bin_error*bin_width)
 rootfile.Close()
