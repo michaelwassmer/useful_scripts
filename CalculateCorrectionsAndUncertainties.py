@@ -15,7 +15,7 @@ file_TH = ROOT.TFile.Open(process+".root")
     #hists[key.GetName()] = file_TH.Get(key.GetName())
 
 def K_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
-    Kappa_EW = file_TH.Get(process+"_pTV_kappa_"+EW_ORDER+"_EW").Clone()
+    Kappa_EW = file_TH.Get(process+"_pTV_kappa_"+EW_ORDER+"_EW").Clone()+file_TH.Get(process+"_pTV_kappa_NNLO_Sud").Clone()
     for i,e in enumerate(e_EW):
         dKappa_EW = file_TH.Get(process+"_pTV_d"+str(i+1)+"kappa_EW").Clone()
         dKappa_EW.Scale(e)
