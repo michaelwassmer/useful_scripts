@@ -59,7 +59,9 @@ for scale in scales:
 # cross section weights according to sm_backgrounds.csv combined with 3 neutrino flavors and NNLO K factor from XS database
 weight_xs = 1.
 if boson=="Z":
-    if "50To100" in filename:
+    if "0To50" in filename:
+        weight_xs = 3*0.971*0.00000000213602275563
+    elif "50To100" in filename:
         weight_xs = 3*0.971*0.0000173748656012
     elif "100To250" in filename:
         weight_xs = 3*0.971*0.00000638503945658
@@ -73,7 +75,11 @@ if boson=="Z":
         print "problem with xs weight"
         exit()
 elif boson=="W":
-    if "100To250" in filename:
+    if "0To50" in filename:
+        weight_xs = 0.00000406579861962
+    elif "50To100" in filename:
+        weight_xs = 0.00000632431016621
+    elif "100To250" in filename:
         weight_xs = 0.00000385148734634
     elif "250To400" in filename:
         weight_xs = 0.0000396029149925
