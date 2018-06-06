@@ -15,7 +15,8 @@ file_TH = ROOT.TFile.Open(process+".root")
     #hists[key.GetName()] = file_TH.Get(key.GetName())
 
 def K_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
-    Kappa_EW = file_TH.Get(process+"_pTV_kappa_"+EW_ORDER+"_EW").Clone()+file_TH.Get(process+"_pTV_kappa_NNLO_Sud").Clone()
+    #Kappa_EW = file_TH.Get(process+"_pTV_kappa_"+EW_ORDER+"_EW").Clone()+file_TH.Get(process+"_pTV_kappa_NNLO_Sud").Clone()
+    Kappa_EW = file_TH.Get(process+"_pTV_kappa_EW").Clone()
     for i,e in enumerate(e_EW):
         dKappa_EW = file_TH.Get(process+"_pTV_d"+str(i+1)+"kappa_EW").Clone()
         dKappa_EW.Scale(e)
@@ -24,11 +25,13 @@ def K_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
         Kappa_EW.SetBinContent(i,1.+Kappa_EW.GetBinContent(i))
     K_QCD = file_TH.Get(process+"_pTV_K_"+QCD_ORDER).Clone()
     for i,e in enumerate(e_QCD):
-        dK_QCD = file_TH.Get(process+"_pTV_d"+str(i+1)+"K_"+QCD_ORDER).Clone()
+        #dK_QCD = file_TH.Get(process+"_pTV_d"+str(i+1)+"K_"+QCD_ORDER).Clone()
+        dK_QCD = file_TH.Get(process+"_pTV_d"+str(i+1)+"K_"+"NLO").Clone()
         dK_QCD.Scale(e)
         K_QCD = K_QCD + dK_QCD
     prod = K_QCD*Kappa_EW
-    dK_MIX = file_TH.Get(process+"_pTV_dK_"+QCD_ORDER+"_mix").Clone()
+    #dK_MIX = file_TH.Get(process+"_pTV_dK_"+QCD_ORDER+"_mix").Clone()
+    dK_MIX = file_TH.Get(process+"_pTV_dK_NLO_mix").Clone()
     dK_MIX.Scale(e_MIX)
     return prod + dK_MIX
 
