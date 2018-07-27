@@ -49,7 +49,7 @@ def sigma_TH(QCD_ORDER,EW_ORDER,e_QCD=[],e_EW=[],e_MIX = 0.):
     sigma_TH.SetName(process+"_"+QCD_ORDER+"_"+EW_ORDER+"_"+str_QCD+"_"+str_EW+"_"+str_MIX)
     sigma_TH.SetTitle(process+"_"+QCD_ORDER+"_"+EW_ORDER+"_"+str_QCD+"_"+str_EW+"_"+str_MIX)
     # scale the theory prediction with 2 if the process is W->lv since the theory histograms only include one flavor (e or mu)
-    if process=="evj":
+    if process=="evj" or process=="eej":
         sigma_TH.Scale(2.)
     return sigma_TH
 
@@ -65,8 +65,11 @@ print len(output_hists)
 file_mc=None
 hist_mc=None
 if process=="vvj":
-    file_mc = ROOT.TFile.Open("root_files/Z_boson_pt.root")
-    hist_mc = file_mc.Get("Z_boson_pt")
+    file_mc = ROOT.TFile.Open("root_files/Zvv_boson_pt.root")
+    hist_mc = file_mc.Get("Zvv_boson_pt")
+elif process=="eej":
+    file_mc = ROOT.TFile.Open("root_files/Zll_boson_pt.root")
+    hist_mc = file_mc.Get("Zll_boson_pt")
 elif process=="evj":
     file_mc = ROOT.TFile.Open("root_files/W_boson_pt.root")
     hist_mc = file_mc.Get("W_boson_pt")
@@ -85,7 +88,9 @@ for scale in ["Weight_scale_variation_muR_0p5_muF_1p0","Weight_scale_variation_m
     nom_clone.SetTitle(nom_clone.GetTitle()+"_"+scale)
     V=None
     if process=="vvj":
-        V="Z"
+        V="Zvv"
+    elif process=="eej":
+        V="Zll"
     elif process=="evj":
         V="W"
     else:

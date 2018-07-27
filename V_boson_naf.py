@@ -26,7 +26,12 @@ def split_files_into_jobs(files,events_per_job):
         print "file ",i
         files_in_job.append(file)
         file_ = ROOT.TFile.Open(file)
-        tree = file_.Get("Events")
+        tree = None
+        try:
+            tree = file_.Get("Events")
+        except ReferenceError:
+            file_.Close()
+            continue
         events+=tree.GetEntries()
         file_.Close()
         if events>=events_per_job or i==(len(files)-1):
@@ -59,7 +64,7 @@ def print_shell_script(boson,postfix,files):
     os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
 boson = str(sys.argv[1])
-if not (boson=="Z" or boson=="W"):
+if not (boson=="Zvv" or boson=="Zll" or boson=="W"):
     print "first argument has to be Z or W"
     exit()
 files = get_files(str(sys.argv[2]).replace('"',''))
