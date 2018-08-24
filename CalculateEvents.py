@@ -33,3 +33,4 @@ print "LHE: ",weight_sum_lhe/event_sum
 print "#neg./#all. ",neg_sum*1.0/event_sum
 print "#pos-#neg/#pos+#neg ",(event_sum-2*neg_sum)*1.0/(event_sum)
 print "sum of all weighted events: ",weight_sum_gen
+print "sum weighted events divided by sum unweighted events: ",weight_sum_gen*1.0/event_sum
