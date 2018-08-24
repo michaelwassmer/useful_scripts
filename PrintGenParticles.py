@@ -11,7 +11,7 @@ def isAncestor(a,p) :
                          return True
         return False
 
-events = Events (['file:///nfs/dust/cms/user/mwassmer/DarkMatter/testfile/0CB860A0-35C7-E611-BE26-549F35AF44E3.root'])
+events = Events (sys.argv[1:])
 
 handlePruned  = Handle ("std::vector<reco::GenParticle>")
 handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
