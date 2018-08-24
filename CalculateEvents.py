@@ -1,6 +1,4 @@
-# this script print the trigger paths / filters of a MINIAOD file you give as an argument
-# trigger paths if you use TriggerResults::HLT
-# filters if you use TriggerResults::RECO for data or TriggerResults::PAT for mc
+# this script counts the weighted sum of all events in the files given as a argument to the script
 import ROOT
 import sys
 from DataFormats import FWLite
@@ -10,8 +8,6 @@ ROOT.gSystem.Load('libDataFormatsFWLite.so')
 events = FWLite.Events(sys.argv[1:])
 geninfo = FWLite.Handle('GenEventInfoProduct')
 lheinfo = FWLite.Handle('LHEEventProduct')
-#label = 'TriggerResults::HLT'
-#label = 'TriggerResults::RECO'
 label_gen =	'generator'
 label_lhe = 'externalLHEProducer'
 weight_sum_gen = 0
@@ -29,7 +25,8 @@ for event in events:
     event_sum+=1
     if weight_gen<0.:
         neg_sum+=1
-    print event_sum
+    if event_sum % 10000 == 0:
+        print event_sum
     
 print "GEN: ",weight_sum_gen/event_sum
 print "LHE: ",weight_sum_lhe/event_sum
