@@ -49,10 +49,12 @@ def print_shell_script(boson,postfix,files):
     script+="eval `scram runtime -sh`\n"
     if not os.path.isdir("root_files"):
         os.mkdir("root_files")
-    script+="cd /nfs/dust/cms/user/mwassmer/DarkMatter/useful_scripts/root_files\n"
-    script+="python /nfs/dust/cms/user/mwassmer/DarkMatter/useful_scripts/V_boson_pt_reweighting.py "+boson+" "+postfix
+    script+="cd /nfs/dust/cms/user/mwassmer/DarkMatter/useful_scripts/Vboson_Pt_Reweighting/root_files\n"
+    script+="python /nfs/dust/cms/user/mwassmer/DarkMatter/useful_scripts/Vboson_Pt_Reweighting/V_boson_pt_reweighting.py "+boson+" "+postfix
     for file in files:
         script+=" "+file
+    script+="\n"
+    script+=boson+'_boson_pt_'+postfix+'.sh'
     if not os.path.isdir("scripts"):
         os.mkdir("scripts")
     filename = 'scripts/'+boson+'_boson_pt_'+postfix+'.sh'
