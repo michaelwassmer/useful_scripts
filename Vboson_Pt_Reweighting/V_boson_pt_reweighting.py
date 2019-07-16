@@ -78,17 +78,17 @@ if boson=="Zvv":
         exit()
 elif boson=="Zll":
     if "0To50" in filename:
-        weight_xs = 0.971*0.0000109307493597
+        weight_xs = 0.0000109307493597
     elif "50To100" in filename:
-        weight_xs = 0.971*0.00000304778590507
+        weight_xs = 0.00000304778590507
     elif "100To250" in filename:
-        weight_xs = 0.971*0.00000504633172324
+        weight_xs = 0.00000504633172324
     elif "250To400" in filename:
-        weight_xs = 0.971*0.0000213841637512
+        weight_xs = 0.0000213841637512
     elif "400To650" in filename:
-        weight_xs = 0.971*0.000298725580649
+        weight_xs = 0.000298725580649
     elif "650ToInf" in filename:
-        weight_xs = 0.971*0.000297498054008
+        weight_xs = 0.000297498054008
     else:
         print "problem with xs weight"
         exit()
