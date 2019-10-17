@@ -33,7 +33,7 @@ scales = {  #"nominal" : 1000,
 # inputs
 boson=str(sys.argv[1])
 postfix=str(sys.argv[2])
-filename = sys.argv[3]
+filename = sys.argv[3:]
 
 events = Events (filename)
 
@@ -61,53 +61,56 @@ for scale in scales:
 # cross section weights according to sm_backgrounds.csv combined with 3 neutrino flavors and NNLO K factor from XS database
 weight_xs = 1.
 if boson=="Zvv":
-    if "0To50" in filename:
-        weight_xs = 3*0.971*0.00000000213602275563
-    elif "50To100" in filename:
-        weight_xs = 3*0.971*0.0000173748656012
-    elif "100To250" in filename:
-        weight_xs = 3*0.971*0.00000638503945658
-    elif "250To400" in filename:
-        weight_xs = 3*0.971*0.0000184890023189
-    elif "400To650" in filename:
-        weight_xs = 3*0.971*0.000203629482553
-    elif "650ToInf" in filename:
-        weight_xs = 3*0.971*0.000208821846317
-    else:
-        print "problem with xs weight"
-        exit()
+    weight_xs = 1.
+    #if "0To50" in filename:
+        #weight_xs = 3*0.971*0.00000000213602275563
+    #elif "50To100" in filename:
+        #weight_xs = 3*0.971*0.0000173748656012
+    #elif "100To250" in filename:
+        #weight_xs = 3*0.971*0.00000638503945658
+    #elif "250To400" in filename:
+        #weight_xs = 3*0.971*0.0000184890023189
+    #elif "400To650" in filename:
+        #weight_xs = 3*0.971*0.000203629482553
+    #elif "650ToInf" in filename:
+        #weight_xs = 3*0.971*0.000208821846317
+    #else:
+        #print "problem with xs weight"
+        #exit()
 elif boson=="Zll":
-    if "0To50" in filename:
-        weight_xs = 0.0000109307493597
-    elif "50To100" in filename:
-        weight_xs = 0.00000304778590507
-    elif "100To250" in filename:
-        weight_xs = 0.00000504633172324
-    elif "250To400" in filename:
-        weight_xs = 0.0000213841637512
-    elif "400To650" in filename:
-        weight_xs = 0.000298725580649
-    elif "650ToInf" in filename:
-        weight_xs = 0.000297498054008
-    else:
-        print "problem with xs weight"
-        exit()
+    weight_xs = 1.
+    #if "0To50" in filename:
+        #weight_xs = 0.0000109307493597
+    #elif "50To100" in filename:
+        #weight_xs = 0.00000304778590507
+    #elif "100To250" in filename:
+        #weight_xs = 0.00000504633172324
+    #elif "250To400" in filename:
+        #weight_xs = 0.0000213841637512
+    #elif "400To650" in filename:
+        #weight_xs = 0.000298725580649
+    #elif "650ToInf" in filename:
+        #weight_xs = 0.000297498054008
+    #else:
+        #print "problem with xs weight"
+        #exit()
 elif boson=="W":
-    if "0To50" in filename:
-        weight_xs = 0.00000406579861962
-    elif "50To100" in filename:
-        weight_xs = 0.00000632431016621
-    elif "100To250" in filename:
-        weight_xs = 0.00000385148734634
-    elif "250To400" in filename:
-        weight_xs = 0.0000396029149925
-    elif "400To600" in filename:
-        weight_xs = 0.000265993494557
-    elif "600ToInf" in filename:
-        weight_xs = 0.000255801929068
-    else:
-        print "problem with xs weight"
-        exit()
+    weight_xs = 1.
+    #if "0To50" in filename:
+        #weight_xs = 0.00000406579861962
+    #elif "50To100" in filename:
+        #weight_xs = 0.00000632431016621
+    #elif "100To250" in filename:
+        #weight_xs = 0.00000385148734634
+    #elif "250To400" in filename:
+        #weight_xs = 0.0000396029149925
+    #elif "400To600" in filename:
+        #weight_xs = 0.000265993494557
+    #elif "600ToInf" in filename:
+        #weight_xs = 0.000255801929068
+    #else:
+        #print "problem with xs weight"
+        #exit()
 else:
     print "only W or Z boson allowed"
     exit()
