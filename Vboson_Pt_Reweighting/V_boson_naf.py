@@ -66,7 +66,15 @@ def print_shell_script(boson,postfix,files):
     for file in files:
         script+=" "+file
     script+="\n"
-    script+="#"+boson+'_boson_pt_'+postfix+'.sh'
+    script+="exitcode=$?\n"
+    script+="#"+boson+'_boson_pt_'+postfix+'.sh\n'
+    script+="if [ $exitcode -eq 0 ]\n"
+    script+="then\n"
+    script+="  exit 0\n"
+    script+="else\n"
+    script+="  exit 1\n"
+    script+="fi\n"
+    
     if not os.path.isdir("scripts"):
         os.mkdir("scripts")
     filename = 'scripts/'+boson+'_boson_pt_'+postfix+'.sh'
@@ -83,7 +91,7 @@ if not (boson=="Zvv" or boson=="Zll" or boson=="W"):
     exit()
 files = get_files(str(sys.argv[2]).replace('"',''))
 print("number of files: ",len(files))
-file_splitting = split_files_into_jobs(files,1000000)
+file_splitting = split_files_into_jobs(files,100000)
 #print file_splitting
 for i,files in enumerate(file_splitting):
     print_shell_script(boson,str(i),files)

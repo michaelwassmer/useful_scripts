@@ -38,7 +38,7 @@ filename = sys.argv[3:]
 events = Events (filename)
 
 handlePruned  = Handle ("std::vector<reco::GenParticle>")
-handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
+#handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle('GenEventInfoProduct')
 lheinfo = Handle('LHEEventProduct')
 labelPruned = "prunedGenParticles"
@@ -126,12 +126,12 @@ for event in events:
     #if count>10000:
         #break
     #print "----------------------------------------------------------------"
-    event.getByLabel (labelPacked, handlePacked)
+    #event.getByLabel (labelPacked, handlePacked)
     event.getByLabel (labelPruned, handlePruned)
     event.getByLabel (labelWeight, eventinfo)
     event.getByLabel (labelLHE , lheinfo)
     # get the product
-    packed = handlePacked.product()
+    #packed = handlePacked.product()
     pruned = handlePruned.product()
     weight = eventinfo.product().weight()
     lhe_weight = lheinfo.product().originalXWGTUP()
