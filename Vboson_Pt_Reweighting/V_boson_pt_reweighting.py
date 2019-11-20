@@ -3,6 +3,7 @@ import sys
 from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
+from sample_info import sample_dict
 
 # ROOT.gSystem.Load('libGenVector')
 
@@ -111,68 +112,19 @@ for filename in filenames:
     # cross section weights
     weight_xs = 1.0
     if boson == "Zvv":
-        if "70to100" in filename.lower():
-            weight_xs = 1.0
-        elif "100to200" in filename.lower():
-            weight_xs = 3.034e02 / (0.99889084877 * 23702894)
-        elif "200to400" in filename.lower():
-            weight_xs = 9.171e01 / (0.998167404062 * 23276346)
-        elif "400to600" in filename.lower():
-            weight_xs = 1.310e01 / (0.997067314921 * 9511100)
-        elif "600to800" in filename.lower():
-            weight_xs = 3.248e00 / (0.996104211223 * 5748975)
-        elif "800to1200" in filename.lower():
-            weight_xs = 1.496e00 / (0.994785258971 * 2066798)
-        elif "1200to2500" in filename.lower():
-            weight_xs = 3.425e-01 / (0.991155131246 * 343198)
-        elif "2500toinf" in filename.lower():
-            weight_xs = 5.268e-03 / (0.974257611584 * 359639)
-        else:
-            print ("problem with xs weight")
-            exit()
+        print("looking at Zvv events")
     elif boson == "Zll":
-        if "70to100" in filename.lower():
-            weight_xs = 1.467e02 / (0.999078975043 * 10019684)
-        elif "100to200" in filename.lower():
-            weight_xs = 1.608e02 / (0.998792448899 * 11530510)
-        elif "200to400" in filename.lower():
-            weight_xs = 4.863e01 / (0.998169717254 * 11225887)
-        elif "400to600" in filename.lower():
-            weight_xs = 6.975e00 / (0.997072381873 * 9697098)
-        elif "600to800" in filename.lower():
-            weight_xs = 1.756e00 / (0.995931961668 * 8862104)
-        elif "800to1200" in filename.lower():
-            weight_xs = 8.094e-01 / (0.994664118363 * 3138129)
-        elif "1200to2500" in filename.lower():
-            weight_xs = 1.931e-01 / (0.991109218169 * 536416)
-        elif "2500toinf" in filename.lower():
-            weight_xs = 3.513e-03 / (0.973061894027 * 427051)
-        else:
-            print ("problem with xs weight")
-            exit()
+        print("looking at Zll events")
     elif boson == "W":
-        if "70to100" in filename.lower():
-            weight_xs = 1.289e03 / (0.998964928963 * 28084244)
-        elif "100to200" in filename.lower():
-            weight_xs = 1.392e03 / (0.998480069784 * 29521158)
-        elif "200to400" in filename.lower():
-            weight_xs = 4.103e02 / (0.99785343911 * 25468933)
-        elif "400to600" in filename.lower():
-            weight_xs = 5.785e01 / (0.996531486304 * 5932701)
-        elif "600to800" in filename.lower():
-            weight_xs = 1.295e01 / (0.995798716799 * 19771294)
-        elif "800to1200" in filename.lower():
-            weight_xs = 5.451e00 / (0.99486745736 * 8402687)
-        elif "1200to2500" in filename.lower():
-            weight_xs = 1.084e00 / (0.990962380 * 7633949)
-        elif "2500toinf" in filename.lower():
-            weight_xs = 8.061e-03 / (0.97476175542 * 3273980)
-        else:
-            print ("problem with xs weight")
-            exit()
+        print("looking at W events")
     else:
         print ("only W or Z boson allowed")
         exit()
+    subdict = sample_dict.get("2018",None).get(boson,None)
+    for key in subdict:
+        if key in filename.lower():
+            subsubdict = subdict.get(key,None)
+            weight_xs = subsubdict.get("sigma",None) / (subsubdict.get("X",None) * subsubdict.get("N_gen",None))
     weight_xs *= 1000.0
     print ("weight_xs = ", weight_xs)
 
