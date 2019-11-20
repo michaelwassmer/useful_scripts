@@ -3,235 +3,285 @@ import sys
 from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
-#ROOT.gSystem.Load('libGenVector')
 
-#not needed at the moment
+# ROOT.gSystem.Load('libGenVector')
+
+# not needed at the moment
 def FindAllMothers(particle):
     mother_ids = []
-    print("particle id ",particle.pdgId())
-    print("# mothers ",particle.numberOfMothers())
+    print ("particle id ", particle.pdgId())
+    print ("# mothers ", particle.numberOfMothers())
     for i in range(particle.numberOfMothers()):
-        print("mother id ",particle.mother(i).pdgId())
+        print ("mother id ", particle.mother(i).pdgId())
         mother_ids.append(particle.mother(i).pdgId())
         next_mothers_ids = FindAllMothers(particle.mother(i))
         for next_mother_id in next_mothers_ids:
             mother_ids.append(next_mother_id)
     return mother_ids
 
+
 # also use muR and muF variations
-scales = {  #"nominal" : 1000,
-            "Weight_scale_variation_muR_1p0_muF_1p0" : 1,
-            "Weight_scale_variation_muR_1p0_muF_2p0" : 2,
-            "Weight_scale_variation_muR_1p0_muF_0p5" : 3,
-            "Weight_scale_variation_muR_2p0_muF_1p0" : 4,
-            "Weight_scale_variation_muR_2p0_muF_2p0" : 5,
-            "Weight_scale_variation_muR_2p0_muF_0p5" : 6,
-            "Weight_scale_variation_muR_0p5_muF_1p0" : 7,
-            "Weight_scale_variation_muR_0p5_muF_2p0" : 8,
-            "Weight_scale_variation_muR_0p5_muF_0p5" : 9
-        }
+scales = {  # "nominal" : 1000,
+    "Weight_scale_variation_muR_1p0_muF_1p0": 1,
+    "Weight_scale_variation_muR_1p0_muF_2p0": 2,
+    "Weight_scale_variation_muR_1p0_muF_0p5": 3,
+    "Weight_scale_variation_muR_2p0_muF_1p0": 4,
+    "Weight_scale_variation_muR_2p0_muF_2p0": 5,
+    "Weight_scale_variation_muR_2p0_muF_0p5": 6,
+    "Weight_scale_variation_muR_0p5_muF_1p0": 7,
+    "Weight_scale_variation_muR_0p5_muF_2p0": 8,
+    "Weight_scale_variation_muR_0p5_muF_0p5": 9,
+}
 
 # inputs
-boson=str(sys.argv[1])
-postfix=str(sys.argv[2])
+boson = str(sys.argv[1])
+postfix = str(sys.argv[2])
 filenames = sys.argv[3:]
 
 # product labels and handles
-handlePruned  = Handle ("std::vector<reco::GenParticle>")
-#handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
-eventinfo = Handle('GenEventInfoProduct')
-lheinfo = Handle('LHEEventProduct')
+handlePruned = Handle("std::vector<reco::GenParticle>")
+# handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
+eventinfo = Handle("GenEventInfoProduct")
+lheinfo = Handle("LHEEventProduct")
 labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
 labelLHE = "externalLHEProducer"
 
 # binning according to https://arxiv.org/pdf/1705.04664.pdf
-binning = [30,40,50,60,70,80,90,100,110,120,130,140,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2200,2400,2600,2800,3000,6500]
-v_boson_pt_hist = ROOT.TH1D(boson+"_boson_pt",boson+"_boson_pt",len(binning)-1,array('d',binning))
+binning = [
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+    110,
+    120,
+    130,
+    140,
+    150,
+    200,
+    250,
+    300,
+    350,
+    400,
+    450,
+    500,
+    550,
+    600,
+    650,
+    700,
+    750,
+    800,
+    850,
+    900,
+    950,
+    1000,
+    1100,
+    1200,
+    1300,
+    1400,
+    1600,
+    1800,
+    2000,
+    2200,
+    2400,
+    2600,
+    2800,
+    3000,
+    6500,
+]
+v_boson_pt_hist = ROOT.TH1D(boson + "_boson_pt", boson + "_boson_pt", len(binning) - 1, array("d", binning))
 v_boson_pt_hist.Sumw2()
-file_ = ROOT.TFile(boson+"_boson_pt_"+postfix+".root","RECREATE")
+file_ = ROOT.TFile(boson + "_boson_pt_" + postfix + ".root", "RECREATE")
 
 # list of histograms for scale variations
 v_boson_pt_hists = {}
 for scale in scales:
-    v_boson_pt_hists[scale]=ROOT.TH1D(boson+"_boson_pt_"+scale,boson+"_boson_pt_"+scale,len(binning)-1,array('d',binning))
+    v_boson_pt_hists[scale] = ROOT.TH1D(boson + "_boson_pt_" + scale, boson + "_boson_pt_" + scale, len(binning) - 1, array("d", binning))
     v_boson_pt_hists[scale].Sumw2()
 
-count= 0
+count = 0
 
 # loop over files
 for filename in filenames:
     # cross section weights
-    weight_xs = 1.
-    if boson=="Zvv":
+    weight_xs = 1.0
+    if boson == "Zvv":
         if "70to100" in filename.lower():
-            weight_xs = 1.
+            weight_xs = 1.0
         elif "100to200" in filename.lower():
-            weight_xs = 3.034e+02/(0.99889084877*23702894)
+            weight_xs = 3.034e02 / (0.99889084877 * 23702894)
         elif "200to400" in filename.lower():
-            weight_xs = 9.171e+01/(0.998167404062*23276346)
+            weight_xs = 9.171e01 / (0.998167404062 * 23276346)
         elif "400to600" in filename.lower():
-            weight_xs = 1.310e+01/(0.997067314921*9511100)
+            weight_xs = 1.310e01 / (0.997067314921 * 9511100)
         elif "600to800" in filename.lower():
-            weight_xs = 3.248e+00/(0.996104211223*5748975)
+            weight_xs = 3.248e00 / (0.996104211223 * 5748975)
         elif "800to1200" in filename.lower():
-            weight_xs = 1.496e+00/(0.994785258971*2066798)
+            weight_xs = 1.496e00 / (0.994785258971 * 2066798)
         elif "1200to2500" in filename.lower():
-            weight_xs = 3.425e-01/(0.991155131246*343198)
+            weight_xs = 3.425e-01 / (0.991155131246 * 343198)
         elif "2500toinf" in filename.lower():
-            weight_xs = 5.268e-03/(0.974257611584*359639)
+            weight_xs = 5.268e-03 / (0.974257611584 * 359639)
         else:
-            print("problem with xs weight")
+            print ("problem with xs weight")
             exit()
-    elif boson=="Zll":
+    elif boson == "Zll":
         if "70to100" in filename.lower():
-            weight_xs = 1.467e+02/(0.999078975043*10019684)
+            weight_xs = 1.467e02 / (0.999078975043 * 10019684)
         elif "100to200" in filename.lower():
-            weight_xs = 1.608e+02/(0.998792448899*11530510)
+            weight_xs = 1.608e02 / (0.998792448899 * 11530510)
         elif "200to400" in filename.lower():
-            weight_xs = 4.863e+01/(0.998169717254*11225887)
+            weight_xs = 4.863e01 / (0.998169717254 * 11225887)
         elif "400to600" in filename.lower():
-            weight_xs = 6.975e+00/(0.997072381873*9697098)
+            weight_xs = 6.975e00 / (0.997072381873 * 9697098)
         elif "600to800" in filename.lower():
-            weight_xs = 1.756e+00/(0.995931961668*8862104)
+            weight_xs = 1.756e00 / (0.995931961668 * 8862104)
         elif "800to1200" in filename.lower():
-            weight_xs = 8.094e-01/(0.994664118363*3138129)
+            weight_xs = 8.094e-01 / (0.994664118363 * 3138129)
         elif "1200to2500" in filename.lower():
-            weight_xs = 1.931e-01/(0.991109218169*536416)
+            weight_xs = 1.931e-01 / (0.991109218169 * 536416)
         elif "2500toinf" in filename.lower():
-            weight_xs = 3.513e-03/(0.973061894027*427051)
+            weight_xs = 3.513e-03 / (0.973061894027 * 427051)
         else:
-            print("problem with xs weight")
+            print ("problem with xs weight")
             exit()
-    elif boson=="W":
+    elif boson == "W":
         if "70to100" in filename.lower():
-            weight_xs = 1.289e+03/(0.998964928963*28084244)
+            weight_xs = 1.289e03 / (0.998964928963 * 28084244)
         elif "100to200" in filename.lower():
-            weight_xs = 1.392e+03/(0.998480069784*29521158)
+            weight_xs = 1.392e03 / (0.998480069784 * 29521158)
         elif "200to400" in filename.lower():
-            weight_xs = 4.103e+02/(0.99785343911*25468933)
+            weight_xs = 4.103e02 / (0.99785343911 * 25468933)
         elif "400to600" in filename.lower():
-            weight_xs = 5.785e+01/(0.996531486304*5932701)
+            weight_xs = 5.785e01 / (0.996531486304 * 5932701)
         elif "600to800" in filename.lower():
-            weight_xs = 1.295e+01/(0.995798716799*19771294)
+            weight_xs = 1.295e01 / (0.995798716799 * 19771294)
         elif "800to1200" in filename.lower():
-            weight_xs = 5.451e+00/(0.99486745736*8402687)
+            weight_xs = 5.451e00 / (0.99486745736 * 8402687)
         elif "1200to2500" in filename.lower():
-            weight_xs = 1.084e+00/(0.990962380*7633949)
+            weight_xs = 1.084e00 / (0.990962380 * 7633949)
         elif "2500toinf" in filename.lower():
-            weight_xs = 8.061e-03/(0.97476175542*3273980)
+            weight_xs = 8.061e-03 / (0.97476175542 * 3273980)
         else:
-            print("problem with xs weight")
+            print ("problem with xs weight")
             exit()
     else:
-        print("only W or Z boson allowed")
+        print ("only W or Z boson allowed")
         exit()
-    weight_xs*=1000.
-    print("weight_xs = ",weight_xs)
+    weight_xs *= 1000.0
+    print ("weight_xs = ", weight_xs)
 
     # loop over events
-    events = Events (filename)
+    events = Events(filename)
     for event in events:
-        count+=1
+        count += 1
         if count % 10000 == 0:
-            print(count)
-        #event.getByLabel (labelPacked, handlePacked)
-        event.getByLabel (labelPruned, handlePruned)
-        event.getByLabel (labelWeight, eventinfo)
-        event.getByLabel (labelLHE , lheinfo)
+            print (count)
+        # event.getByLabel (labelPacked, handlePacked)
+        event.getByLabel(labelPruned, handlePruned)
+        event.getByLabel(labelWeight, eventinfo)
+        event.getByLabel(labelLHE, lheinfo)
         # get the product
-        #packed = handlePacked.product()
+        # packed = handlePacked.product()
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         lhe_weight = lheinfo.product().originalXWGTUP()
         decay_prods = []
         radiated_photons = []
         for p in pruned:
-            if boson=="Zvv":
-                if not ((abs(p.pdgId())==12 or abs(p.pdgId())==14 or abs(p.pdgId())==16) and p.isPromptFinalState()):
-                    #print("no neutrino")
+            if boson == "Zvv":
+                if not ((abs(p.pdgId()) == 12 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16) and p.isPromptFinalState()):
+                    # print("no neutrino")
                     continue
-                #print("found neutrino")
+                # print("found neutrino")
                 decay_prods.append(p)
-            elif boson=="Zll":
+            elif boson == "Zll":
                 # need to save stable photons to calculate dressed leptons later
-                if abs(p.pdgId())==22 and p.status()==1 and (not p.statusFlags().isPrompt()):
+                if abs(p.pdgId()) == 22 and p.status() == 1 and (not p.statusFlags().isPrompt()):
                     radiated_photons.append(p)
                     continue
                 # check for prompt final state charged leptons
-                if not ((abs(p.pdgId())==11 or abs(p.pdgId())==13) and p.isPromptFinalState()):# or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
-                    #print("no charged lepton")
+                if not (
+                    (abs(p.pdgId()) == 11 or abs(p.pdgId()) == 13) and p.isPromptFinalState()
+                ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
+                    # print("no charged lepton")
                     continue
-                #print("found charged lepton")
+                # print("found charged lepton")
                 decay_prods.append(p)
-            elif boson=="W":
+            elif boson == "W":
                 # need to save stable photons to calculate dressed leptons later
-                if abs(p.pdgId())==22 and p.status()==1 and (not p.statusFlags().isPrompt()):
+                if abs(p.pdgId()) == 22 and p.status() == 1 and (not p.statusFlags().isPrompt()):
                     radiated_photons.append(p)
                     continue
                 # check for prompt final state charged leptons and neutrinos
-                if not ((abs(p.pdgId())==11 or abs(p.pdgId())==12 or abs(p.pdgId())==13 or abs(p.pdgId())==14) and p.isPromptFinalState()):# or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
-                    #print("no neutrino/charged lepton")
+                if not (
+                    (abs(p.pdgId()) == 11 or abs(p.pdgId()) == 12 or abs(p.pdgId()) == 13 or abs(p.pdgId()) == 14) and p.isPromptFinalState()
+                ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
+                    # print("no neutrino/charged lepton")
                     continue
-                #print("found neutrino/charged lepton")
+                # print("found neutrino/charged lepton")
                 decay_prods.append(p)
             else:
-                print("only W or Z boson allowed")
+                print ("only W or Z boson allowed")
                 exit()
-        
+
         # fail-safe: check if the number of found daughters is exactly 2 as one would expect
-        if len(decay_prods)!=2:
-            #print("more than two decay prods ",len(decay_prods))
+        if len(decay_prods) != 2:
+            # print("more than two decay prods ",len(decay_prods))
             continue
-        
-        if boson=="Zvv":
+
+        if boson == "Zvv":
             # fail-safe: check if the daughters of the Z boson are particle and anti-particle as well as same lepton flavor
-            if decay_prods[0].pdgId()+decay_prods[1].pdgId()!=0:
+            if decay_prods[0].pdgId() + decay_prods[1].pdgId() != 0:
                 continue
-        
-        elif boson=="Zll":
+
+        elif boson == "Zll":
             # fail-safe: check if the daughters of the Z boson are particle and anti-particle as well as same lepton flavor
-            if decay_prods[0].pdgId()+decay_prods[1].pdgId()!=0:
+            if decay_prods[0].pdgId() + decay_prods[1].pdgId() != 0:
                 continue
             # add radiated photons back to leptons
             for decay_prod in decay_prods:
-                if abs(decay_prod.pdgId())==11 or abs(decay_prod.pdgId())==13:
+                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13:
                     for photon in radiated_photons:
-                        if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(),photon.p4()))<0.1:
-                            decay_prod.setP4(decay_prod.p4()+photon.p4())
-        
-        elif boson=="W":
+                        if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
+                            decay_prod.setP4(decay_prod.p4() + photon.p4())
+
+        elif boson == "W":
             # fail-safe: check if the daughters of the W boson are particle and anti-particle as well as same lepton flavor
-            if decay_prods[0].pdgId()*decay_prods[1].pdgId()>=0 or abs(abs(decay_prods[0].pdgId())-abs(decay_prods[1].pdgId()))!=1:
-                #print("W conditions not satisfied ")
+            if decay_prods[0].pdgId() * decay_prods[1].pdgId() >= 0 or abs(abs(decay_prods[0].pdgId()) - abs(decay_prods[1].pdgId())) != 1:
+                # print("W conditions not satisfied ")
                 continue
             # add radiated photons back to lepton
             for decay_prod in decay_prods:
-                if abs(decay_prod.pdgId())==11 or abs(decay_prod.pdgId())==13:
+                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13:
                     for photon in radiated_photons:
-                        if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(),photon.p4()))<0.1:
-                            decay_prod.setP4(decay_prod.p4()+photon.p4())
-                    
+                        if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
+                            decay_prod.setP4(decay_prod.p4() + photon.p4())
+
         else:
-            print("only W or Z boson allowed")
+            print ("only W or Z boson allowed")
             exit()
-        
+
         # reconstruct vector boson from the two decay products
-        v_boson = decay_prods[0].p4()+decay_prods[1].p4()
+        v_boson = decay_prods[0].p4() + decay_prods[1].p4()
         v_boson_pt = v_boson.pt()
         # fill the vector boson pt
-        v_boson_pt_hist.Fill(v_boson_pt,weight*weight_xs/1000.)
+        v_boson_pt_hist.Fill(v_boson_pt, weight * weight_xs / 1000.0)
         # fill histograms for scale variations
         for scale in scales:
-            #print(scale)
-            #print(scales[scale])
+            # print(scale)
+            # print(scales[scale])
             for i in range(lheinfo.product().weights().size()):
-                #print(lheinfo.product().weights().at(i).id)
+                # print(lheinfo.product().weights().at(i).id)
                 if int(lheinfo.product().weights().at(i).id) == int(scales[scale]):
                     scale_weight = lheinfo.product().weights().at(i).wgt
-                    #print(scale_weight)
-                    v_boson_pt_hists[scale].Fill(v_boson_pt,weight*weight_xs/1000.*scale_weight/lhe_weight)
+                    # print(scale_weight)
+                    v_boson_pt_hists[scale].Fill(v_boson_pt, weight * weight_xs / 1000.0 * scale_weight / lhe_weight)
                     break
 
 # write all to a file
@@ -239,5 +289,4 @@ file_.WriteTObject(v_boson_pt_hist)
 for scale in scales:
     file_.WriteTObject(v_boson_pt_hists[scale])
 file_.Close()
-print("finished")
-                
+print ("finished")
