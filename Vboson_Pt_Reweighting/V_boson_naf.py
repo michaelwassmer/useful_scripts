@@ -28,20 +28,20 @@ veto_list = [
             ]
 
 def get_files(dataset_name):
-    print dataset_name
+    print(dataset_name)
     data = das_client.get_data("dataset="+dataset_name+" instance=prod/global").get('data',None)
     datasets =[ data[i].get('dataset',None)[0].get('name',None) for i in range(len(data)) ]
-    print datasets
+    print(datasets)
     files = []
     for dataset in datasets:
         if dataset in veto_list:
             continue
-        print dataset
+        print(dataset)
         data=das_client.get_data("file dataset="+dataset+" instance=prod/global")
         for d in data.get('data',None):
-            #print d
+            #print(d)
             for f in d.get('file',None):
-                #print f
+                #print(f)
                 #if not 'nevents' in f:
                     #continue
                 files.append([file_prefix+f.get('name',None),f.get('nevents',None)])
@@ -52,7 +52,7 @@ def split_files_into_jobs(files,events_per_job):
     file_splitting = []
     files_in_job = []
     for i,file in enumerate(files):
-        #print "file ",i
+        #print("file ",i)
         files_in_job.append(file[0])
         if file[1]==None:
             file_ = ROOT.TFile.Open(file)
@@ -101,17 +101,17 @@ def print_shell_script(boson,postfix,files):
     f=open(filename,'w')
     f.write(script)
     f.close()
-    print 'created script',filename
+    print('created script',filename)
     st = os.stat(filename)
     os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
 boson = str(sys.argv[1])
 if not (boson=="Zvv" or boson=="Zll" or boson=="W"):
-    print "first argument has to be Z or W"
+    print("first argument has to be Z or W")
     exit()
 files = get_files(str(sys.argv[2]).replace('"',''))
 print("number of files: ",len(files))
 file_splitting = split_files_into_jobs(files,50000)
-#print file_splitting
+#print(file_splitting)
 for i,files in enumerate(file_splitting):
     print_shell_script(boson,str(i),files)
