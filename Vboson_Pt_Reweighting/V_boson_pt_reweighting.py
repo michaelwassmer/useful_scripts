@@ -1,3 +1,4 @@
+from __future__ import print_function
 import ROOT
 import sys
 from array import array
@@ -120,7 +121,7 @@ for filename in filenames:
     else:
         print ("only W or Z boson allowed")
         exit()
-    subdict = sample_dict.get("2018",None).get(boson,None)
+    subdict = sample_dict.get("2017",None).get(boson,None)
     for key in subdict:
         if key in filename.lower():
             subsubdict = subdict.get(key,None)
@@ -154,12 +155,12 @@ for filename in filenames:
                 decay_prods.append(p)
             elif boson == "Zll":
                 # need to save stable photons to calculate dressed leptons later
-                if abs(p.pdgId()) == 22 and p.status() == 1 and (not p.statusFlags().isPrompt()):
+                if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
                     radiated_photons.append(p)
                     continue
                 # check for prompt final state charged leptons
                 if not (
-                    (abs(p.pdgId()) == 11 or abs(p.pdgId()) == 13) and p.isPromptFinalState()
+                    ((abs(p.pdgId()) == 11 or abs(p.pdgId()) == 13) and p.isPromptFinalState()) or (abs(p.pdgId()) == 15 and p.isPromptDecayed())
                 ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
                     # print("no charged lepton")
                     continue
@@ -167,12 +168,12 @@ for filename in filenames:
                 decay_prods.append(p)
             elif boson == "W":
                 # need to save stable photons to calculate dressed leptons later
-                if abs(p.pdgId()) == 22 and p.status() == 1 and (not p.statusFlags().isPrompt()):
+                if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
                     radiated_photons.append(p)
                     continue
                 # check for prompt final state charged leptons and neutrinos
                 if not (
-                    (abs(p.pdgId()) == 11 or abs(p.pdgId()) == 12 or abs(p.pdgId()) == 13 or abs(p.pdgId()) == 14) and p.isPromptFinalState()
+                    ((abs(p.pdgId()) == 11 or abs(p.pdgId()) == 12 or abs(p.pdgId()) == 13 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16) and p.isPromptFinalState()) or (abs(p.pdgId()) == 15 and p.isPromptDecayed())
                 ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
                     # print("no neutrino/charged lepton")
                     continue
@@ -183,8 +184,9 @@ for filename in filenames:
                 exit()
 
         # fail-safe: check if the number of found daughters is exactly 2 as one would expect
-        if len(decay_prods) != 2:
-            # print("more than two decay prods ",len(decay_prods))
+        if len(decay_prods) > 2:
+            decay_prods.sort(key = lambda dp : dp.pt(), reverse=True)
+        if len(decay_prods) < 2:
             continue
 
         if boson == "Zvv":
@@ -198,7 +200,7 @@ for filename in filenames:
                 continue
             # add radiated photons back to leptons
             for decay_prod in decay_prods:
-                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13:
+                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13 or abs(decay_prod.pdgId()) == 15:
                     for photon in radiated_photons:
                         if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
@@ -210,7 +212,7 @@ for filename in filenames:
                 continue
             # add radiated photons back to lepton
             for decay_prod in decay_prods:
-                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13:
+                if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13 or abs(decay_prod.pdgId()) == 15:
                     for photon in radiated_photons:
                         if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
