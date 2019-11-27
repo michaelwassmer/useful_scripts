@@ -82,7 +82,7 @@ def split_files_into_jobs(files, events_per_job):
     return file_splitting
 
 
-def print_shell_script(boson, postfix, files):
+def print_shell_script(boson, postfix, files, era):
     script = ""
     script += "#!/bin/bash\n"
     script += "export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n"
@@ -94,6 +94,8 @@ def print_shell_script(boson, postfix, files):
     script += "cd /nfs/dust/cms/user/mwassmer/MonoTop/useful_scripts/Vboson_Pt_Reweighting/root_files\n"
     script += (
         "python /nfs/dust/cms/user/mwassmer/MonoTop/useful_scripts/Vboson_Pt_Reweighting/V_boson_pt_reweighting.py "
+        + era
+        + " "
         + boson
         + " "
         + postfix
@@ -112,7 +114,7 @@ def print_shell_script(boson, postfix, files):
 
     if not os.path.isdir("scripts"):
         os.mkdir("scripts")
-    filename = "scripts/" + boson + "_boson_pt_" + postfix + ".sh"
+    filename = "scripts/" + boson + "_boson_pt_" + era + "_" + postfix + ".sh"
     f = open(filename, "w")
     f.write(script)
     f.close()
@@ -121,13 +123,17 @@ def print_shell_script(boson, postfix, files):
     os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
 
-boson = str(sys.argv[1])
+era = str(sys.argv[1])
+boson = str(sys.argv[2])
+
 if not (boson == "Zvv" or boson == "Zll" or boson == "W"):
     print ("first argument has to be Z or W")
     exit()
-files = get_files(str(sys.argv[2]).replace('"', ""))
+
+files = get_files(str(sys.argv[3]).replace('"', ""))
 print ("number of files: ", len(files))
-file_splitting = split_files_into_jobs(files, 50000)
+print ("number of events: ", sum(element[1] for element in files))
+file_splitting = split_files_into_jobs(files, 1000000)
 # print(file_splitting)
 for i, files in enumerate(file_splitting):
-    print_shell_script(boson, str(i), files)
+    print_shell_script(boson, str(i), files, era)

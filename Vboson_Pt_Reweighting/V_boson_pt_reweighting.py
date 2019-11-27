@@ -36,9 +36,10 @@ scales = {  # "nominal" : 1000,
 }
 
 # inputs
-boson = str(sys.argv[1])
-postfix = str(sys.argv[2])
-filenames = sys.argv[3:]
+era = str(sys.argv[1])
+boson = str(sys.argv[2])
+postfix = str(sys.argv[3])
+filenames = sys.argv[4:]
 
 # product labels and handles
 handlePruned = Handle("std::vector<reco::GenParticle>")
@@ -98,7 +99,7 @@ binning = [
 ]
 v_boson_pt_hist = ROOT.TH1D(boson + "_boson_pt", boson + "_boson_pt", len(binning) - 1, array("d", binning))
 v_boson_pt_hist.Sumw2()
-file_ = ROOT.TFile(boson + "_boson_pt_" + postfix + ".root", "RECREATE")
+file_ = ROOT.TFile(boson + "_boson_pt_" + era + "_" + postfix + ".root", "RECREATE")
 
 # list of histograms for scale variations
 v_boson_pt_hists = {}
@@ -121,7 +122,7 @@ for filename in filenames:
     else:
         print ("only W or Z boson allowed")
         exit()
-    subdict = sample_dict.get("2017",None).get(boson,None)
+    subdict = sample_dict.get(era,None).get(boson,None)
     for key in subdict:
         if key in filename.lower():
             subsubdict = subdict.get(key,None)

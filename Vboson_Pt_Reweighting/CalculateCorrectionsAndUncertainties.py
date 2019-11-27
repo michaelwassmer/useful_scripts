@@ -5,6 +5,8 @@ ROOT.gROOT.SetBatch(True)
 
 process = sys.argv[1]
 
+era = sys.argv[2]
+
 str_dict = {1.0: "u", -1.0: "d", 0.0: "n"}
 
 file_TH = ROOT.TFile.Open(process + ".root")
@@ -78,11 +80,11 @@ def sigma_TH(QCD_ORDER, EW_ORDER, e_QCD=[], e_EW=[], e_MIX=0.0):
     )
     # scale the theory prediction with 2 if the process is W->lv since the theory histograms only include one flavor (e or mu)
     if process == "evj" or process == "eej":
-        sigma_TH.Scale(2.0)
+        sigma_TH.Scale(3.0)
     return sigma_TH
 
 
-output = ROOT.TFile("TheoryXS_" + process + ".root", "RECREATE")
+output = ROOT.TFile("TheoryXS_" + process + "_" + era + ".root", "RECREATE")
 
 
 nom = sigma_TH("NNLO", "NLO", [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 0.0)
@@ -103,13 +105,13 @@ print (len(output_hists))
 file_mc = None
 hist_mc = None
 if process == "vvj":
-    file_mc = ROOT.TFile.Open("root_files/Zvv_boson_pt.root")
+    file_mc = ROOT.TFile.Open("root_files/Zvv_boson_pt_" + era + ".root")
     hist_mc = file_mc.Get("Zvv_boson_pt")
 elif process == "eej":
-    file_mc = ROOT.TFile.Open("root_files/Zll_boson_pt.root")
+    file_mc = ROOT.TFile.Open("root_files/Zll_boson_pt_" + era + ".root")
     hist_mc = file_mc.Get("Zll_boson_pt")
 elif process == "evj":
-    file_mc = ROOT.TFile.Open("root_files/W_boson_pt.root")
+    file_mc = ROOT.TFile.Open("root_files/W_boson_pt_" + era + ".root")
     hist_mc = file_mc.Get("W_boson_pt")
 else:
     print ("wrong option")
@@ -156,5 +158,22 @@ alpha_up.Divide(hist_mc)
 alpha_down.Divide(hist_mc)
 output.WriteTObject(alpha_up)
 output.WriteTObject(alpha_down)
+
+stats_up = nom.Clone()
+stats_up.SetName(stats_up.GetName() + "_stats_up")
+stats_up.SetTitle(stats_up.GetName() + "_stats_up")
+stats_down = nom.Clone()
+stats_down.SetName(stats_down.GetName() + "_stats_down")
+stats_down.SetTitle(stats_down.GetName() + "_stats_down")
+for i in range(stats_up.GetNbinsX()):
+    stats_up.SetBinError(i, 0.)
+    stats_down.SetBinError(i, 0.)
+stats_up.Divide(hist_mc)
+stats_down.Divide(hist_mc)
+for i in range(stats_up.GetNbinsX()):
+    stats_up.SetBinContent(i, stats_up.GetBinContent(i) + stats_up.GetBinError(i))
+    stats_down.SetBinContent(i, stats_down.GetBinContent(i) - stats_down.GetBinError(i))
+output.WriteTObject(stats_up)
+output.WriteTObject(stats_down)
 
 output.Close()
