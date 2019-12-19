@@ -89,6 +89,11 @@ output = ROOT.TFile("TheoryXS_" + process + "_" + era + ".root", "RECREATE")
 
 nom = sigma_TH("NNLO", "NLO", [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 0.0)
 
+nom_clone = nom.Clone()
+nom_clone.SetName(nom_clone.GetName()+"_prediction")
+nom_clone.SetTitle(nom_clone.GetTitle()+"_prediction")
+output.WriteTObject(nom_clone)
+
 output_hists = [
     sigma_TH("NNLO", "NLO", [e_QCD1, e_QCD2, e_QCD3], [e_EW1, e_EW2, e_EW3], e_MIX)
     for e_QCD1 in [1, 0, -1]
