@@ -58,6 +58,14 @@ parser.add_option(
     default="",
     help="ROOT selection string for desired trigger",
 )
+parser.add_option(
+    "-V",
+    "--variable",
+    dest="variable",
+    type="string",
+    default="Hadr_Recoil_Pt",
+    help="ROOT string for desired variable in which the efficiency should be calculated"
+)
 (options, args) = parser.parse_args()
 
 data_mc_string = "data" if options.is_data else "mc"
@@ -72,9 +80,12 @@ data_frame = None
 branches = [
     "Hadr_Recoil_Pt",
     "N_AK15Jets",
+    "N_LooseMuons",
     "N_TightMuons",
     "Muon_Pt",
     "N_LooseElectrons",
+    "N_TightElectrons",
+    "Electron_Pt",
     "N_LoosePhotons",
     "Triggered_HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60_vX",
     "Triggered_HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_vX",
@@ -110,12 +121,12 @@ binning = [200, 250, 300, 350, 400, 500, 700, 1500]
 reference_events = data_frame.Filter(options.selection + " && " + options.ref_trigger)
 selected_events = reference_events.Filter(options.trigger)
 reference_histo = reference_events.Histo1D(
-    ("Hadr_Recoil_Pt_ref", "Hadronic recoil", len(binning) - 1, array.array("d", binning)),
-    "Hadr_Recoil_Pt",
+    (options.variable+"_ref", options.variable, len(binning) - 1, array.array("d", binning)),
+    options.variable,
 )
 selection_histo = selected_events.Histo1D(
-    ("Hadr_Recoil_Pt_sel", "Hadronic recoil", len(binning) - 1, array.array("d", binning)),
-    "Hadr_Recoil_Pt",
+    (options.variable+"_sel", options.variable, len(binning) - 1, array.array("d", binning)),
+    options.variable,
 )
 efficiency = ROOT.TGraphAsymmErrors()
 efficiency.Divide(selection_histo.GetPtr(), reference_histo.GetPtr())
