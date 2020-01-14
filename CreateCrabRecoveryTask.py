@@ -10,6 +10,7 @@ parser.add_option(
 parser.add_option(
     "-p", "--project", dest="project", type="string", default="", help="path to the crab project directory"
 )
+parser.add_option("-l", "--local", action="store_true", dest="local", default=False)
 (options, args) = parser.parse_args()
 
 # read the path to the original crab config
@@ -62,7 +63,10 @@ for line in original_config_as_list:
         modified_config_as_list.append(line)
 # get the lumis processed by the original crab job
 modified_config_as_list.append("\n")
-modified_config_as_list.append("original_task_lumis = getLumiListInValidFiles(dataset=\"{}\", dbsurl='phys03')".format(output_dataset))
+if not options.local:
+    modified_config_as_list.append("original_task_lumis = getLumiListInValidFiles(dataset=\"{}\", dbsurl='phys03')".format(output_dataset))
+else:
+    modified_config_as_list.append("original_task_lumis = LumiList(\"" + crab_project_dir + "/results/processedLumis.json\")")
 modified_config_as_list.append("\n")
 # get the lumis in the original input dataset
 modified_config_as_list.append("officialLumiMask = getLumiListInValidFiles(dataset=\"{}\", dbsurl='global')".format(original_input_dataset))
@@ -75,6 +79,7 @@ modified_config_as_list.append("recoveryLumiMask.writeJSON(\"{}\")".format(reque
 modified_config_as_list.append("\n")
 # read the json as a lumimask for the recovery crab task
 modified_config_as_list.append("config.Data.lumiMask = \"{}\"".format(request_name+"_recovery.json"))
+modified_config_as_list.append("\n")
 
 import_statements = ["from CRABClient.UserUtilities import config, getLumiListInValidFiles\n","from WMCore.DataStructs.LumiList import LumiList\n"]
 
