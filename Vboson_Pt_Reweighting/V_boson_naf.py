@@ -87,7 +87,7 @@ def print_shell_script(boson, postfix, files, era):
     script += "#!/bin/bash\n"
     script += "export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n"
     script += "source $VO_CMS_SW_DIR/cmsset_default.sh\n"
-    script += "cd /nfs/dust/cms/user/mwassmer/MonoTop/CMSSW_10_2_13/src\n"
+    script += "cd /nfs/dust/cms/user/mwassmer/MonoTop/CMSSW_10_2_18/src\n"
     script += "eval `scram runtime -sh`\n"
     if not os.path.isdir("root_files"):
         os.mkdir("root_files")
@@ -126,8 +126,8 @@ def print_shell_script(boson, postfix, files, era):
 era = str(sys.argv[1])
 boson = str(sys.argv[2])
 
-if not (boson == "Zvv" or boson == "Zll" or boson == "W"):
-    print ("first argument has to be Z or W")
+if not (boson == "Zvv" or boson == "Zll" or boson == "W" or boson == "G"):
+    print ("first argument has to be Zll or Zvv or W or G (photon)")
     exit()
 
 files = get_files(str(sys.argv[3]).replace('"', ""))

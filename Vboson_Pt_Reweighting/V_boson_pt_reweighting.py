@@ -97,6 +97,8 @@ binning = [
     3000,
     6500,
 ]
+
+# nominal histogram
 v_boson_pt_hist = ROOT.TH1D(boson + "_boson_pt", boson + "_boson_pt", len(binning) - 1, array("d", binning))
 v_boson_pt_hist.Sumw2()
 file_ = ROOT.TFile(boson + "_boson_pt_" + era + "_" + postfix + ".root", "RECREATE")
@@ -114,19 +116,21 @@ for filename in filenames:
     # cross section weights
     weight_xs = 1.0
     if boson == "Zvv":
-        print("looking at Zvv events")
+        print ("looking at Zvv events")
     elif boson == "Zll":
-        print("looking at Zll events")
+        print ("looking at Zll events")
     elif boson == "W":
-        print("looking at W events")
+        print ("looking at W events")
+    elif boson == "G":
+        print ("looking at Photon events")
     else:
-        print ("only W or Z boson allowed")
+        print ("only W or Z boson or Photon allowed")
         exit()
-    subdict = sample_dict.get(era,None).get(boson,None)
+    subdict = sample_dict.get(era, None).get(boson, None)
     for key in subdict:
         if key in filename.lower():
-            subsubdict = subdict.get(key,None)
-            weight_xs = subsubdict.get("sigma",None) / (subsubdict.get("X",None) * subsubdict.get("N_gen",None))
+            subsubdict = subdict.get(key, None)
+            weight_xs = subsubdict.get("sigma", None) / (subsubdict.get("X", None) * subsubdict.get("N_gen", None))
     weight_xs *= 1000.0
     print ("weight_xs = ", weight_xs)
 
@@ -140,55 +144,73 @@ for filename in filenames:
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
         event.getByLabel(labelLHE, lheinfo)
-        # get the product
+        # get the products
         # packed = handlePacked.product()
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         lhe_weight = lheinfo.product().originalXWGTUP()
+        # list for decay products of W or Z boson
         decay_prods = []
-        radiated_photons = []
-        for p in pruned:
-            if boson == "Zvv":
-                if not ((abs(p.pdgId()) == 12 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16) and p.isPromptFinalState()):
-                    # print("no neutrino")
-                    continue
-                # print("found neutrino")
-                decay_prods.append(p)
-            elif boson == "Zll":
+        # list for photons either for photon+jets events or for radiated photons to add back to charged leptons
+        photons = []
+        # list for hadrons needed for photon isolation
+        hadrons = []
+        # list for isolated photons
+        isolated_photons = []
+        if boson == "Zvv":
+            for p in pruned:
+                if p.isPromptFinalState() and (abs(p.pdgId()) == 12 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16):
+                    decay_prods.append(p)
+                    # print("found neutrino")
+        elif boson == "Zll":
+            for p in pruned:
                 # need to save stable photons to calculate dressed leptons later
                 if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
-                    radiated_photons.append(p)
+                    photons.append(p)
                     continue
                 # check for prompt final state charged leptons
-                if not (
-                    ((abs(p.pdgId()) == 11 or abs(p.pdgId()) == 13) and p.isPromptFinalState()) or (abs(p.pdgId()) == 15 and p.isPromptDecayed())
-                ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
-                    # print("no charged lepton")
-                    continue
-                # print("found charged lepton")
-                decay_prods.append(p)
-            elif boson == "W":
+                if ((abs(p.pdgId()) == 11 or abs(p.pdgId()) == 13) and p.isPromptFinalState()) or (
+                    abs(p.pdgId()) == 15 and p.isPromptDecayed()
+                ):
+                    decay_prods.append(p)
+                    # print("found charged lepton")
+        elif boson == "W":
+            for p in pruned:
                 # need to save stable photons to calculate dressed leptons later
                 if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
-                    radiated_photons.append(p)
+                    photons.append(p)
                     continue
                 # check for prompt final state charged leptons and neutrinos
-                if not (
-                    ((abs(p.pdgId()) == 11 or abs(p.pdgId()) == 12 or abs(p.pdgId()) == 13 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16) and p.isPromptFinalState()) or (abs(p.pdgId()) == 15 and p.isPromptDecayed())
-                ):  # or abs(daughter.pdgId())==15 or abs(daughter.pdgId())==16 with taus
-                    # print("no neutrino/charged lepton")
+                if (
+                    (abs(p.pdgId()) == 11 or abs(p.pdgId()) == 12 or abs(p.pdgId()) == 13 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16)
+                    and p.isPromptFinalState()
+                ) or (abs(p.pdgId()) == 15 and p.isPromptDecayed()):
+                    decay_prods.append(p)
+                    # print("found neutrino/charged lepton")
+        elif boson == "G":
+            for p in pruned:
+                # need to save stable photons
+                if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
+                    photons.append(p)
                     continue
-                # print("found neutrino/charged lepton")
-                decay_prods.append(p)
-            else:
-                print ("only W or Z boson allowed")
-                exit()
+                if p.status() == 1 and not (abs(p.pdgId()) == 22 or (abs(p.pdgId()) >= 11 and abs(p.pdgId()) <= 16)):
+                    hadrons.append(p)
+        else:
+            print ("only W or Z boson or Photon allowed")
+            exit()
 
-        # fail-safe: check if the number of found daughters is exactly 2 as one would expect
-        if len(decay_prods) > 2:
-            decay_prods.sort(key = lambda dp : dp.pt(), reverse=True)
-        if len(decay_prods) < 2:
-            continue
+        # fail-safe: check if the number of found daughters is exactly 2 as one would expect for W/Z
+        if boson == "Zvv" or boson == "Zll" or boson == "W":
+            if len(decay_prods) > 2:
+                decay_prods.sort(key=lambda dp: dp.pt(), reverse=True)
+            elif len(decay_prods) < 2:
+                continue
+        elif boson == "G":
+            if len(photons) < 1:
+                continue
+        else:
+            print ("only W or Z boson or Photon allowed")
+            exit()
 
         if boson == "Zvv":
             # fail-safe: check if the daughters of the Z boson are particle and anti-particle as well as same lepton flavor
@@ -202,7 +224,7 @@ for filename in filenames:
             # add radiated photons back to leptons
             for decay_prod in decay_prods:
                 if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13 or abs(decay_prod.pdgId()) == 15:
-                    for photon in radiated_photons:
+                    for photon in photons:
                         if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
 
@@ -214,17 +236,51 @@ for filename in filenames:
             # add radiated photons back to lepton
             for decay_prod in decay_prods:
                 if abs(decay_prod.pdgId()) == 11 or abs(decay_prod.pdgId()) == 13 or abs(decay_prod.pdgId()) == 15:
-                    for photon in radiated_photons:
+                    for photon in photons:
                         if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
-
-        else:
-            print ("only W or Z boson allowed")
-            exit()
+        elif boson == "G":
+            epsilon_0_dyn = 0.1
+            n_dyn = 1
+            iterations = 2.0
+            for photon in photons:
+                isolated = True
+                R_dyn = 91.1876 / (photon.pt() * sqrt(epsilon_0_dyn))
+                # print ("R_dyn: ",R_dyn)
+                R_0_dyn = min(1.0, R_dyn)
+                # print ([R_0_dyn/iterations*i for i in range(1,int(iterations)+1)])
+                for R in [R_0_dyn / iterations * i for i in range(1, int(iterations) + 1)]:
+                    isolation = 0.0
+                    for hadron in hadrons:
+                        if sqrt(ROOT.Math.VectorUtil.DeltaR2(hadron.p4(), photon.p4())) <= R:
+                            isolation += hadron.pt()
+                    if isolation > (epsilon_0_dyn * photon.pt() * pow((1 - cos(R)) / (1 - cos(R_0_dyn)), n_dyn)):
+                        isolated = False
+                        break
+                if isolated:
+                    isolated_photons.append(photon)
+            if len(isolated_photons) > 1:
+                isolated_photons.sort(key=lambda dp: dp.pt(), reverse=True)
+            elif len(isolated_photons) < 1:
+                # print ("no isolated photon found")
+                continue
 
         # reconstruct vector boson from the two decay products
-        v_boson = decay_prods[0].p4() + decay_prods[1].p4()
+        if boson == "Zvv" or boson == "Zll" or boson == "W":
+            v_boson = decay_prods[0].p4() + decay_prods[1].p4()
+        elif boson == "G":
+            # print ("photons: ",[photon.pt() for photon in isolated_photons])
+            # print ("hadrons id: ",[hadron.pdgId() for hadron in hadrons])
+            # print ("hadrons status: ",[hadron.status() for hadron in hadrons])
+            # print ("hadrons e: ",[hadron.energy() for hadron in hadrons])
+            # print ("hadrons p: ",[hadron.p() for hadron in hadrons])
+            # print ("hadrons dR: ", [sqrt(ROOT.Math.VectorUtil.DeltaR2(hadron.p4(), photons[0].p4())) for hadron in hadrons])
+            v_boson = isolated_photons[0].p4()
+        else:
+            print ("only W or Z boson or Photon allowed")
+            exit()
         v_boson_pt = v_boson.pt()
+        # print (v_boson_pt)
         # fill the vector boson pt
         v_boson_pt_hist.Fill(v_boson_pt, weight * weight_xs / 1000.0)
         # fill histograms for scale variations
