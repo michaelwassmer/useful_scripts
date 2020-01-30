@@ -43,7 +43,7 @@ filenames = sys.argv[4:]
 
 # product labels and handles
 handlePruned = Handle("std::vector<reco::GenParticle>")
-# handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
+handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle("GenEventInfoProduct")
 lheinfo = Handle("LHEEventProduct")
 labelPruned = "prunedGenParticles"
@@ -140,12 +140,10 @@ for filename in filenames:
         count += 1
         if count % 10000 == 0:
             print (count)
-        # event.getByLabel (labelPacked, handlePacked)
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
         event.getByLabel(labelLHE, lheinfo)
         # get the products
-        # packed = handlePacked.product()
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         lhe_weight = lheinfo.product().originalXWGTUP()
@@ -157,6 +155,7 @@ for filename in filenames:
         hadrons = []
         # list for isolated photons
         isolated_photons = []
+        
         if boson == "Zvv":
             for p in pruned:
                 if p.isPromptFinalState() and (abs(p.pdgId()) == 12 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16):
@@ -188,11 +187,13 @@ for filename in filenames:
                     decay_prods.append(p)
                     # print("found neutrino/charged lepton")
         elif boson == "G":
+            event.getByLabel(labelPacked, handlePacked)
+            packed = handlePacked.product()
             for p in pruned:
                 # need to save stable photons
                 if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
                     photons.append(p)
-                    continue
+            for p in packed:
                 if p.status() == 1 and not (abs(p.pdgId()) == 22 or (abs(p.pdgId()) >= 11 and abs(p.pdgId()) <= 16)):
                     hadrons.append(p)
         else:
