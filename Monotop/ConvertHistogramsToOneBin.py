@@ -81,7 +81,7 @@ for j, key in enumerate(input_file.GetListOfKeys()):
     histo_nbins = object.GetNbinsX()
     # print("nbins: ",histo_nbins)
     # loop over the bins of the histogram
-    for i in range(histo_nbins + 1):
+    for i in range(1,histo_nbins + 1):
         n_bins += 1
         if i not in dirs:
             dirs[i]=output_file.mkdir("bin_"+str(i))
