@@ -58,7 +58,7 @@ output_file = ROOT.TFile(
 n_keys = len(input_file.GetListOfKeys())
 n_bins = 0
 n_problematic_bins = 0
-
+dirs = {}
 # loop over the keys of the input root file (histograms)
 for j, key in enumerate(input_file.GetListOfKeys()):
     # print(key.GetName())
@@ -83,6 +83,8 @@ for j, key in enumerate(input_file.GetListOfKeys()):
     # loop over the bins of the histogram
     for i in range(histo_nbins + 1):
         n_bins += 1
+        if i not in dirs:
+            dirs[i]=output_file.mkdir("bin_"+str(i))
         # get bin content and error
         bin_content = object.GetBinContent(i)
         bin_error = object.GetBinError(i)
@@ -128,7 +130,7 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         # remove automatic memory handling of ROOT for the new one-bin histogram
         histo_one_bin.SetDirectory(0)
         # write the histogram to the output file
-        output_file.WriteTObject(histo_one_bin)
+        dirs[i].WriteTObject(histo_one_bin)
 
 # close the input and output root files
 input_file.Close()
