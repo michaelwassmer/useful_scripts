@@ -118,6 +118,9 @@ elif process == "eej":
 elif process == "evj":
     file_mc = ROOT.TFile.Open("root_files/W_boson_pt_" + era + ".root")
     hist_mc = file_mc.Get("W_boson_pt")
+elif process == "aj":
+    file_mc = ROOT.TFile.Open("root_files/G_boson_pt_" + era + ".root")
+    hist_mc = file_mc.Get("G_boson_pt")
 else:
     print ("wrong option")
     exit()
@@ -143,6 +146,8 @@ for scale in [
         V = "Zll"
     elif process == "evj":
         V = "W"
+    elif process == "aj":
+        V = "G"
     else:
         print ("wrong option")
         exit()
