@@ -44,7 +44,7 @@ filenames = sys.argv[4:]
 
 # product labels and handles
 handlePruned = Handle("std::vector<reco::GenParticle>")
-handlePacked  = Handle ("std::vector<pat::PackedGenParticle>")
+handlePacked = Handle("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle("GenEventInfoProduct")
 lheinfo = Handle("LHEEventProduct")
 labelPruned = "prunedGenParticles"
@@ -157,7 +157,7 @@ for filename in filenames:
         hadrons = []
         # list for isolated photons
         isolated_photons = []
-        
+
         if boson == "Zvv":
             for p in pruned:
                 if p.isPromptFinalState() and (abs(p.pdgId()) == 12 or abs(p.pdgId()) == 14 or abs(p.pdgId()) == 16):
