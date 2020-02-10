@@ -1,3 +1,4 @@
+# imports
 from __future__ import print_function
 import ROOT
 import sys
@@ -23,7 +24,7 @@ def FindAllMothers(particle):
 
 
 # also use muR and muF variations
-scales = {  # "nominal" : 1000,
+scales = {
     "Weight_scale_variation_muR_1p0_muF_1p0": 1,
     "Weight_scale_variation_muR_1p0_muF_2p0": 2,
     "Weight_scale_variation_muR_1p0_muF_0p5": 3,
@@ -126,6 +127,7 @@ for filename in filenames:
     else:
         print ("only W or Z boson or Photon allowed")
         exit()
+    # information to calculate cross section weight
     subdict = sample_dict.get(era, None).get(boson, None)
     for key in subdict:
         if key in filename.lower():
@@ -143,7 +145,7 @@ for filename in filenames:
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
         event.getByLabel(labelLHE, lheinfo)
-        # get the products
+        # get the products (prunedGenParticles collection, GenEventInfoProduct and LHEEventProduct)
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         lhe_weight = lheinfo.product().originalXWGTUP()
@@ -187,6 +189,7 @@ for filename in filenames:
                     decay_prods.append(p)
                     # print("found neutrino/charged lepton")
         elif boson == "G":
+            # need packedGenParticles collection for final state hadrons
             event.getByLabel(labelPacked, handlePacked)
             packed = handlePacked.product()
             for p in pruned:
@@ -194,6 +197,7 @@ for filename in filenames:
                 if abs(p.pdgId()) == 22 and p.status() == 1 and p.statusFlags().isPrompt():
                     photons.append(p)
             for p in packed:
+                # exclude final state photons and leptons from final state gen particle collection -> final state hadrons
                 if p.status() == 1 and not (abs(p.pdgId()) == 22 or (abs(p.pdgId()) >= 11 and abs(p.pdgId()) <= 16)):
                     hadrons.append(p)
         else:
@@ -202,10 +206,13 @@ for filename in filenames:
 
         # fail-safe: check if the number of found daughters is exactly 2 as one would expect for W/Z
         if boson == "Zvv" or boson == "Zll" or boson == "W":
+            # if there are more than 2 final state leptons, e.g. from additional hadron decays, take the leading two leptons (this works in 99.999% of all cases)
             if len(decay_prods) > 2:
                 decay_prods.sort(key=lambda dp: dp.pt(), reverse=True)
+            # if there are less than 2 final state leptons, do not consider this event (happens in O(0.01%) of all cases so basically never)
             elif len(decay_prods) < 2:
                 continue
+        # fail-safe: check if there is at least one final state photon for gamma+jets events
         elif boson == "G":
             if len(photons) < 1:
                 continue
@@ -230,9 +237,8 @@ for filename in filenames:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
 
         elif boson == "W":
-            # fail-safe: check if the daughters of the W boson are particle and anti-particle as well as same lepton flavor
+            # fail-safe: check if the daughters of the W boson are particle and anti-particle as well as same lepton flavor adapted for W decays
             if decay_prods[0].pdgId() * decay_prods[1].pdgId() >= 0 or abs(abs(decay_prods[0].pdgId()) - abs(decay_prods[1].pdgId())) != 1:
-                # print("W conditions not satisfied ")
                 continue
             # add radiated photons back to lepton
             for decay_prod in decay_prods:
@@ -240,6 +246,8 @@ for filename in filenames:
                     for photon in photons:
                         if sqrt(ROOT.Math.VectorUtil.DeltaR2(decay_prod.p4(), photon.p4())) < 0.1:
                             decay_prod.setP4(decay_prod.p4() + photon.p4())
+        # photons are more complicated on theory level
+        # one has to find isolated photons using the isolation prescription in https://arxiv.org/pdf/1705.04664.pdf
         elif boson == "G":
             epsilon_0_dyn = 0.1
             n_dyn = 1
@@ -247,9 +255,7 @@ for filename in filenames:
             for photon in photons:
                 isolated = True
                 R_dyn = 91.1876 / (photon.pt() * sqrt(epsilon_0_dyn))
-                # print ("R_dyn: ",R_dyn)
                 R_0_dyn = min(1.0, R_dyn)
-                # print ([R_0_dyn/iterations*i for i in range(1,int(iterations)+1)])
                 for R in [R_0_dyn / iterations * i for i in range(1, int(iterations) + 1)]:
                     isolation = 0.0
                     for hadron in hadrons:
@@ -260,6 +266,7 @@ for filename in filenames:
                         break
                 if isolated:
                     isolated_photons.append(photon)
+            # if there is more than 1 isolated photon, take the leading one
             if len(isolated_photons) > 1:
                 isolated_photons.sort(key=lambda dp: dp.pt(), reverse=True)
             elif len(isolated_photons) < 1:
@@ -270,12 +277,6 @@ for filename in filenames:
         if boson == "Zvv" or boson == "Zll" or boson == "W":
             v_boson = decay_prods[0].p4() + decay_prods[1].p4()
         elif boson == "G":
-            # print ("photons: ",[photon.pt() for photon in isolated_photons])
-            # print ("hadrons id: ",[hadron.pdgId() for hadron in hadrons])
-            # print ("hadrons status: ",[hadron.status() for hadron in hadrons])
-            # print ("hadrons e: ",[hadron.energy() for hadron in hadrons])
-            # print ("hadrons p: ",[hadron.p() for hadron in hadrons])
-            # print ("hadrons dR: ", [sqrt(ROOT.Math.VectorUtil.DeltaR2(hadron.p4(), photons[0].p4())) for hadron in hadrons])
             v_boson = isolated_photons[0].p4()
         else:
             print ("only W or Z boson or Photon allowed")
