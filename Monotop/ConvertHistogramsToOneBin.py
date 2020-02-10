@@ -33,6 +33,14 @@ parser.add_option(
     help="string which has to occur in the histograms name so that it is considered",
     default="Hadr_Recoil_Pt",
 )
+parser.add_option(
+    "-r",
+    "--repair",
+    action="store_true",
+    dest="repair",
+    help="set this options if you want to set the problematic bins to a default of 0.1",
+    default=False
+)
 (options, args) = parser.parse_args()
 
 # catch some errors
@@ -45,7 +53,10 @@ if ".root" not in input:
    print("given input file probably is not  a root file!")
    print("exiting ...")
    exit()
-
+if options.drop and options.repair:
+   print("you cannot drop and repair the bins at the same time!")
+   print("exiting ...")
+   exit()
 # open root file read-only
 input_file = ROOT.TFile.Open(input, "READ")
 
@@ -116,6 +127,10 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                 if options.drop:
                     print ("bin dropped!")
                     continue
+                elif options.repair:
+                    print ("setting bin to default!")
+                    bin_content = 0.1
+                    bin_error = 0.0
         # create a new histogram with only one bin
         histo_one_bin = ROOT.TH1F(
             histo_name + "_" + "bin" + "_" + str(i),
