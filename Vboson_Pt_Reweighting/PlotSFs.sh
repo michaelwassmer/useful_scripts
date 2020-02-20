@@ -1,0 +1,3 @@
+rootplot rootplot_config.py --processors=4 --size=1024x768 --logy --xlabel="p_{T,V}" --ylabel="Scale factor" --legend-location='None' --title=' ' --gridx --gridy --xmax=3000 -e pdf --draw='hist' --output="SFs_2018" 2018/TheoryXS_eej_madgraph_2018.root
+rootplot rootplot_config.py --processors=4 --size=1024x768 --logy --xlabel="p_{T,V}" --ylabel="Scale factor" --legend-location='None' --title=' ' --gridx --gridy --xmax=3000 -e pdf --draw='hist' --output="SFs_2017" 2017/TheoryXS_eej_madgraph_2017.root
+rootplot rootplot_config.py --processors=4 --size=1024x768 --logy --xlabel="p_{T,V}" --ylabel="Scale factor" --legend-location='None' --title=' ' --gridx --gridy --xmax=3000 -e pdf --draw='hist' --output="SFs_2016" 2016/TheoryXS_eej_madgraph_2016.root
