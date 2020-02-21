@@ -1,6 +1,8 @@
 import ROOT         # allows access to ROOT colors (e.g. ROOT.kRed)
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetHistLineWidth(2)
+ROOT.gStyle.SetTitleSize(0.03,"pad")
+ROOT.gStyle.SetTitleY(0.94)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -159,10 +161,10 @@ decoration_root = '''
 #line.Draw()
 ## Add a caption
 tt_cms = ROOT.TText()
-tt_cms.DrawTextNDC(0.12, 0.95, "CMS simulation")
+tt_cms.DrawTextNDC(0.1, 0.95, "CMS simulation")
 tt_cms.SetTextSize(0.07)
 tt_wip = ROOT.TText()
-tt_wip = tt_wip.DrawTextNDC(0.12, 0.91, "work in progress")
+tt_wip = tt_wip.DrawTextNDC(0.1, 0.91, "work in progress")
 tt_wip.SetTextSize(0.03)
 '''
 
