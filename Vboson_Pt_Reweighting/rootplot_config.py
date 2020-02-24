@@ -1,8 +1,12 @@
 import ROOT         # allows access to ROOT colors (e.g. ROOT.kRed)
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetHistLineWidth(2)
-ROOT.gStyle.SetTitleSize(0.03,"pad")
-ROOT.gStyle.SetTitleY(0.94)
+ROOT.gStyle.SetTitleSize(0.05,"pad")
+ROOT.gStyle.SetTitleY(0.96)
+ROOT.gStyle.SetTitleOffset(1.1,"X")
+ROOT.gStyle.SetTitleSize(0.04,"X")
+ROOT.gStyle.SetTitleSize(0.04,"Y")
+ROOT.gStyle.SetLegendTextSize(0.05)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -125,12 +129,12 @@ options_by_histname = [
                        ]
 
 #### Legend
-legend_width = 0.38        # Fraction of canvas width
+legend_width = 0.12       # Fraction of canvas width
 legend_entry_height = 0.05 # Fraction of canvas height
-max_legend_height = 0.4    # Fraction of canvas height
+max_legend_height = 0.40    # Fraction of canvas height
 legend_left_bound = 0.20   # For left justification
-legend_right_bound = 0.95  # For right justification
-legend_upper_bound = 0.91  # For top justification
+legend_right_bound = 0.85  # For right justification
+legend_upper_bound = 0.85  # For top justification
 legend_lower_bound = 0.15  # For bottom justification
 legend_codes = { 1 : 'upper right',
                  2 : 'upper left',
