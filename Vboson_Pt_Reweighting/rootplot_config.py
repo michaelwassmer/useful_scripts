@@ -1,9 +1,11 @@
 import ROOT         # allows access to ROOT colors (e.g. ROOT.kRed)
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetHistLineWidth(2)
-ROOT.gStyle.SetTitleSize(0.05,"pad")
-ROOT.gStyle.SetTitleY(0.96)
+ROOT.gStyle.SetTextFont(43)
+ROOT.gStyle.SetTitleW(2)
+ROOT.gStyle.SetTitleY(0.97)
 ROOT.gStyle.SetTitleOffset(1.1,"X")
+ROOT.gStyle.SetTitleOffset(1.3,"Y")
 ROOT.gStyle.SetTitleSize(0.04,"X")
 ROOT.gStyle.SetTitleSize(0.04,"Y")
 ROOT.gStyle.SetLegendTextSize(0.05)
@@ -82,6 +84,14 @@ colors = [
 ## Used when --marker_styles is specified; more info available at:
 ## http://root.cern.ch/root/html/TAttMarker.html
 marker_styles = [
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
+    20,
      4, # circle
     25, # square
     26, # triangle
@@ -129,7 +139,7 @@ options_by_histname = [
                        ]
 
 #### Legend
-legend_width = 0.12       # Fraction of canvas width
+legend_width = 0.18       # Fraction of canvas width
 legend_entry_height = 0.05 # Fraction of canvas height
 max_legend_height = 0.40    # Fraction of canvas height
 legend_left_bound = 0.20   # For left justification
@@ -155,7 +165,7 @@ numbering_x_root = 0.97     # Fraction of canvas width
 numbering_y_root = 0.985    # Fraction of canvas height
 
 #### Draw style for TGraph
-draw_graph = 'ap'
+draw_graph = 'apX'
 
 #### This code snippet will be executed after the histograms have all
 #### been drawn, allowing you to add decorations to the canvas
@@ -164,12 +174,14 @@ decoration_root = '''
 #line = ROOT.TLine(5.,0.,5.,9.e9)
 #line.Draw()
 ## Add a caption
-tt_cms = ROOT.TText()
-tt_cms.DrawTextNDC(0.1, 0.95, "CMS simulation")
-tt_cms.SetTextSize(0.07)
+tt_bla = ROOT.TText()
+tt_bla.SetTextFont(63)
+tt_bla.SetTextSizePixels(30)
+tt_bla.DrawTextNDC(0.1, 0.95, "CMS simulation")
 tt_wip = ROOT.TText()
+tt_wip.SetTextFont(63)
+tt_wip.SetTextSizePixels(20)
 tt_wip = tt_wip.DrawTextNDC(0.1, 0.91, "work in progress")
-tt_wip.SetTextSize(0.03)
 '''
 
 ##############################################################################
