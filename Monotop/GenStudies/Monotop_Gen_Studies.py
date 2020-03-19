@@ -79,13 +79,13 @@ labelPacked = "packedGenParticles"
 labelWeight = "generator"
 labelLHE = "externalLHEProducer"
 
-top_pt = ROOT.TH1F("Top_Pt","Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
+top_pt = ROOT.TH1F("Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
 top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}")
 
-dm_pt = ROOT.TH1F("DM_Pt","Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
+dm_pt = ROOT.TH1F("DM_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
 dm_pt.GetXaxis().SetTitle("Dark Matter p_{T}")
 
-med_pt = ROOT.TH1F("Med_Pt","Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
+med_pt = ROOT.TH1F("Med_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
 med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}")
 
 count = 0
