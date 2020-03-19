@@ -85,6 +85,9 @@ top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}")
 dm_pt = ROOT.TH1F("DM_Pt","Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
 dm_pt.GetXaxis().SetTitle("Dark Matter p_{T}")
 
+med_pt = ROOT.TH1F("Med_Pt","Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
+med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}")
+
 count = 0
 # loop over files
 for filename in files:
@@ -109,6 +112,7 @@ for filename in files:
         dm_2_p4 = None
         dm_1_found = False
         dm_2_found = False
+        med_p4 = None
         
         for p in pruned:
             #print (p.pdgId())
@@ -129,6 +133,7 @@ for filename in files:
         top_pt.Fill(top_p4.pt(),weight)
         dm_pt.Fill(dm_1_p4.pt(),weight)
         dm_pt.Fill(dm_2_p4.pt(),weight)
+        med_pt.Fill((dm_1_p4+dm_2_p4).pt(),weight)
 
 top_pt.Scale(1./top_pt.Integral())
 #top_pt.Draw("hist")
@@ -136,8 +141,10 @@ top_pt.Scale(1./top_pt.Integral())
 dm_pt.Scale(1./dm_pt.Integral())
 #dm_pt.Draw("hist")
 #raw_input("bla")
+med_pt.Scale(1./med_pt.Integral())
 
 output_file = ROOT.TFile.Open("GenStudies_"+"Mphi_"+mphi+"_Mchi_"+mchi+".root","RECREATE")
 output_file.WriteTObject(top_pt)
 output_file.WriteTObject(dm_pt)
+output_file.WriteTObject(med_pt)
 output_file.Close()
