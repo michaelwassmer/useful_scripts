@@ -1,5 +1,6 @@
 from __future__ import print_function
 from optparse import OptionParser
+from math import *
 
 usage = "Usage: %prog [options] input_file.root\n"
 parser = OptionParser(usage=usage)
@@ -108,6 +109,13 @@ dm_pt.GetXaxis().SetTitle("Dark Matter p_{T}[GeV]")
 med_pt = ROOT.TH1F("Med_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000)
 med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}[GeV]")
 
+dr_max_b_q_qbar = ROOT.TH1F("Max_DeltaR_b_q_qbar"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,6)
+dr_max_b_q_qbar.GetXaxis().SetTitle("Maximum #Delta R(b/#bar{b},q,#bar{q'})")
+
+dr_max_b_q_qbar_top_pt = ROOT.TH2F("Max_DeltaR_b_q_qbar_Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000,20,0,6)
+dr_max_b_q_qbar_top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}[GeV]")
+dr_max_b_q_qbar_top_pt.GetYaxis().SetTitle("Maximum #Delta R(b/#bar{b},q,#bar{q'})")
+
 count = 0
 # loop over files
 for filename in files:
@@ -133,6 +141,12 @@ for filename in files:
         dm_1_found = False
         dm_2_found = False
         med_p4 = None
+        b_p4 = None
+        q_p4 = None
+        qbar_p4 = None
+        b_found = False
+        q_found = False
+        qbar_found = False
         
         for p in pruned:
             #print (p.pdgId())
@@ -146,11 +160,27 @@ for filename in files:
             if p.pdgId()==-18 and p.isPromptFinalState():
                 dm_2_found = True
                 dm_2_p4 = p.p4()
+            if abs(p.pdgId())==5 and p.isHardProcess() and abs(p.mother(0).pdgId())==6:
+                b_found = True
+                b_p4 = p.p4()
+            if (p.pdgId()==1 or p.pdgId()==2) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+                q_found = True
+                q_p4 = p.p4()
+            if (p.pdgId()==-1 or p.pdgId()==-2) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+                qbar_found = True
+                qbar_p4 = p.p4()
             
-            everything_found = top_found and dm_1_found and dm_2_found
+            everything_found = top_found and dm_1_found and dm_2_found and b_found and q_found and qbar_found
         
         
         top_pt.Fill(top_p4.pt(),weight)
+        if b_found and q_found and qbar_found:
+            dR_b_q = sqrt(ROOT.Math.VectorUtil.DeltaR2(b_p4, q_p4))
+            dR_b_qbar = sqrt(ROOT.Math.VectorUtil.DeltaR2(b_p4, qbar_p4))
+            dR_q_qbar = sqrt(ROOT.Math.VectorUtil.DeltaR2(q_p4, qbar_p4))
+            max_dr = max(dR_b_q,dR_b_qbar,dR_q_qbar)
+            dr_max_b_q_qbar.Fill(max_dr,weight)
+            dr_max_b_q_qbar_top_pt.Fill(top_p4.pt(),max_dr,weight)
         dm_pt.Fill(dm_1_p4.pt(),weight)
         dm_pt.Fill(dm_2_p4.pt(),weight)
         med_pt.Fill((dm_1_p4+dm_2_p4).pt(),weight)
@@ -162,9 +192,13 @@ dm_pt.Scale(1./dm_pt.Integral())
 #dm_pt.Draw("hist")
 #raw_input("bla")
 med_pt.Scale(1./med_pt.Integral())
+dr_max_b_q_qbar.Scale(1./dr_max_b_q_qbar.Integral())
+dr_max_b_q_qbar_top_pt.Scale(1./dr_max_b_q_qbar_top_pt.Integral())
 
 output_file = ROOT.TFile.Open("GenStudies_"+"Mphi_"+mphi+"_Mchi_"+mchi+".root","RECREATE")
 output_file.WriteTObject(top_pt)
 output_file.WriteTObject(dm_pt)
 output_file.WriteTObject(med_pt)
+output_file.WriteTObject(dr_max_b_q_qbar)
+output_file.WriteTObject(dr_max_b_q_qbar_top_pt)
 output_file.Close()
