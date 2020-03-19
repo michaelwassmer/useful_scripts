@@ -1,13 +1,18 @@
 from __future__ import print_function
+from optparse import OptionParser
+
+usage = "Usage: %prog [options] input_file.root\n"
+parser = OptionParser(usage=usage)
+parser.add_option("--files",action="store_true", dest="files", help="flag to tell the script that it should loop over local files", default=False)
+parser.add_option("--maxevents", action="store", dest="maxevents", help="maximum number of events to loop over", default="10000")
+
+(options, args) = parser.parse_args()
+
 import ROOT
-import sys
-from array import array
 from DataFormats.FWLite import Events, Handle
-from math import *
 import Utilities.General.cmssw_das_client as das_client
 
 ROOT.gStyle.SetOptStat(0)
-# ROOT.gSystem.Load('libGenVector')
 
 file_prefix = "root://xrootd-cms.infn.it//"
 
@@ -40,31 +45,46 @@ def get_files(dataset_name):
     return files
     
 def find_masses(dataset_name):
-    index_1 = dataset_name.find("Mphi")
-    index_2 = dataset_name.find("_13TeV")
-    substring = dataset_name[index_1:index_2]
-    substring = substring.replace("-","_")
-    string_array = substring.split("_")
-    print(string_array)
-    return string_array[1],string_array[3]
+    index_1 = dataset_name.find("Mphi_")
+    index_2 = dataset_name.find("Mchi_")
+    #print(index_1,index_2)
+    number_1 = ""
+    number_2 = ""
+    for char in dataset_name[index_1+5:]:
+        #print(char)
+        if not char.isdigit(): break
+        number_1+=char
+    for char in dataset_name[index_2+5:]:
+        #print(char)
+        if not char.isdigit(): break
+        number_2+=char
+    print("Mphi="+number_1+" Mchi="+number_2)
+    return number_1,number_2
 
-# inputs
-#postfix = str(sys.argv[3])
 
-sample_das_string = str(sys.argv[1])
 
-max_events = int(sys.argv[2])
-
-mphi,mchi = find_masses(sample_das_string)
-
-file_info = get_files(sample_das_string)
+max_events = int(options.maxevents)
 
 files = []
-n_events = 0
-for i in range(len(file_info)):
-    if n_events < max_events:
-        files.append(str(file_info[i][0]))
-        n_events+=file_info[i][1]
+mphi,mchi = find_masses(args[0])
+
+if not options.files:
+    sample_das_string = args[0]
+    file_info = get_files(sample_das_string)
+    n_events = 0
+    for i in range(len(file_info)):
+        if n_events < max_events:
+            files.append(str(file_info[i][0]))
+            n_events+=file_info[i][1]
+
+else:
+    n_events = 0
+    for file in args:
+        if n_events < max_events:
+            files.append(str(file))
+            root_file=ROOT.TFile.Open(file,"READ")
+            n_events+=root_file.Get("Events").GetEntries()
+            root_file.Close()
 
 print(files)
 print(n_events)
@@ -73,20 +93,20 @@ print(n_events)
 handlePruned = Handle("std::vector<reco::GenParticle>")
 handlePacked = Handle("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle("GenEventInfoProduct")
-lheinfo = Handle("LHEEventProduct")
+#lheinfo = Handle("LHEEventProduct")
 labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
-labelLHE = "externalLHEProducer"
+#labelLHE = "externalLHEProducer"
 
-top_pt = ROOT.TH1F("Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
-top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}")
+top_pt = ROOT.TH1F("Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000)
+top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}[GeV]")
 
-dm_pt = ROOT.TH1F("DM_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
-dm_pt.GetXaxis().SetTitle("Dark Matter p_{T}")
+dm_pt = ROOT.TH1F("DM_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000)
+dm_pt.GetXaxis().SetTitle("Dark Matter p_{T}[GeV]")
 
-med_pt = ROOT.TH1F("Med_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
-med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}")
+med_pt = ROOT.TH1F("Med_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000)
+med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}[GeV]")
 
 count = 0
 # loop over files
@@ -99,11 +119,11 @@ for filename in files:
             print (count)
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
-        event.getByLabel(labelLHE, lheinfo)
+        #event.getByLabel(labelLHE, lheinfo)
         # get the products (prunedGenParticles collection, GenEventInfoProduct and LHEEventProduct)
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
-        lhe_weight = lheinfo.product().originalXWGTUP()
+        #lhe_weight = lheinfo.product().originalXWGTUP()
         
         everything_found = False
         top_p4 = None
