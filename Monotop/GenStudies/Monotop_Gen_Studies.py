@@ -46,6 +46,7 @@ def get_files(dataset_name):
     return files
     
 def find_masses(dataset_name):
+    dataset_name = dataset_name.replace("-","_")
     index_1 = dataset_name.find("Mphi_")
     index_2 = dataset_name.find("Mchi_")
     #print(index_1,index_2)
@@ -112,9 +113,15 @@ med_pt.GetXaxis().SetTitle("Vector Mediator p_{T}[GeV]")
 dr_max_b_q_qbar = ROOT.TH1F("Max_DeltaR_b_q_qbar"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,6)
 dr_max_b_q_qbar.GetXaxis().SetTitle("Maximum #Delta R(b/#bar{b},q,#bar{q'})")
 
-dr_max_b_q_qbar_top_pt = ROOT.TH2F("Max_DeltaR_b_q_qbar_Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000,20,0,6)
+dr_max_b_q_qbar_top_pt = ROOT.TH2F("Max_DeltaR_b_q_qbar_Top_Pt","",20,0,2000,20,0,6)
 dr_max_b_q_qbar_top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}[GeV]")
 dr_max_b_q_qbar_top_pt.GetYaxis().SetTitle("Maximum #Delta R(b/#bar{b},q,#bar{q'})")
+dr_max_b_q_qbar_top_pt.GetZaxis().SetTitle("Arbitrary units")
+
+m_w_sm = ROOT.TH1F("M_W_SM","",20,0,100)
+m_w_sm.GetXaxis().SetTitle("m_{T}[GeV]")
+m_w_dm = ROOT.TH1F("M_W_DM"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,400)
+m_w_dm.GetXaxis().SetTitle("m_{T}[GeV]")
 
 count = 0
 # loop over files
@@ -147,6 +154,10 @@ for filename in files:
         b_found = False
         q_found = False
         qbar_found = False
+        lepton_p4 = None
+        lepton_found = False
+        neutrino_p4 = None
+        neutrino_found = False
         
         for p in pruned:
             #print (p.pdgId())
@@ -163,14 +174,21 @@ for filename in files:
             if abs(p.pdgId())==5 and p.isHardProcess() and abs(p.mother(0).pdgId())==6:
                 b_found = True
                 b_p4 = p.p4()
-            if (p.pdgId()==1 or p.pdgId()==2) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+            if (p.pdgId()==1 or p.pdgId()==2 or p.pdgId()==3 or p.pdgId()==4) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
                 q_found = True
                 q_p4 = p.p4()
-            if (p.pdgId()==-1 or p.pdgId()==-2) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+            if (p.pdgId()==-1 or p.pdgId()==-2 or p.pdgId()==-3 or p.pdgId()==-4) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
                 qbar_found = True
                 qbar_p4 = p.p4()
+            if (abs(p.pdgId()==11) or abs(p.pdgId())==13 or abs(p.pdgId())==15) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+                lepton_found = True
+                lepton_p4 = p.p4()
+            if (abs(p.pdgId()==12) or abs(p.pdgId())==14 or abs(p.pdgId())==16) and p.isHardProcess() and abs(p.mother(0).pdgId())==24:
+                neutrino_found = True
+                neutrino_p4 = p.p4()
             
-            everything_found = top_found and dm_1_found and dm_2_found and b_found and q_found and qbar_found
+            
+            everything_found = top_found and dm_1_found and dm_2_found and b_found and ((q_found and qbar_found) or (lepton_found and neutrino_found))
         
         
         top_pt.Fill(top_p4.pt(),weight)
@@ -181,6 +199,12 @@ for filename in files:
             max_dr = max(dR_b_q,dR_b_qbar,dR_q_qbar)
             dr_max_b_q_qbar.Fill(max_dr,weight)
             dr_max_b_q_qbar_top_pt.Fill(top_p4.pt(),max_dr,weight)
+        if b_found and lepton_found and neutrino_found:
+            met_p4 = (dm_1_p4+dm_2_p4)+neutrino_p4
+            m_w_neutrino = ROOT.TMath.Sqrt(2.*lepton_p4.pt()*neutrino_p4.pt()*(1-ROOT.TMath.Cos(ROOT.TVector2.Phi_mpi_pi(lepton_p4.phi()-neutrino_p4.phi()))))
+            m_w_met = ROOT.TMath.Sqrt(2.*lepton_p4.pt()*met_p4.pt()*(1-ROOT.TMath.Cos(ROOT.TVector2.Phi_mpi_pi(lepton_p4.phi()-met_p4.phi()))))
+            m_w_sm.Fill(m_w_neutrino,weight)
+            m_w_dm.Fill(m_w_met,weight)
         dm_pt.Fill(dm_1_p4.pt(),weight)
         dm_pt.Fill(dm_2_p4.pt(),weight)
         med_pt.Fill((dm_1_p4+dm_2_p4).pt(),weight)
@@ -194,6 +218,8 @@ dm_pt.Scale(1./dm_pt.Integral())
 med_pt.Scale(1./med_pt.Integral())
 dr_max_b_q_qbar.Scale(1./dr_max_b_q_qbar.Integral())
 dr_max_b_q_qbar_top_pt.Scale(1./dr_max_b_q_qbar_top_pt.Integral())
+m_w_sm.Scale(1./m_w_sm.Integral())
+m_w_dm.Scale(1./m_w_dm.Integral())
 
 output_file = ROOT.TFile.Open("GenStudies_"+"Mphi_"+mphi+"_Mchi_"+mchi+".root","RECREATE")
 output_file.WriteTObject(top_pt)
@@ -201,4 +227,6 @@ output_file.WriteTObject(dm_pt)
 output_file.WriteTObject(med_pt)
 output_file.WriteTObject(dr_max_b_q_qbar)
 output_file.WriteTObject(dr_max_b_q_qbar_top_pt)
+output_file.WriteTObject(m_w_sm)
+output_file.WriteTObject(m_w_dm)
 output_file.Close()
