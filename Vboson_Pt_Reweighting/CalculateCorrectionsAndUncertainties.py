@@ -30,7 +30,7 @@ def K_TH(QCD_ORDER, EW_ORDER, e_QCD=[], e_EW=[], e_MIX=0.0):
             exit()
         dKappa_EW.Scale(e)
         Kappa_EW = Kappa_EW + dKappa_EW
-    for i in range(Kappa_EW.GetNbinsX()):
+    for i in range(Kappa_EW.GetNbinsX()+1):
         Kappa_EW.SetBinContent(i, 1.0 + Kappa_EW.GetBinContent(i))
     K_QCD = file_TH.Get(process + "_pTV_K_" + QCD_ORDER).Clone()
     if not K_QCD:
