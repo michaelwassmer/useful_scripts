@@ -44,6 +44,10 @@ chain.SetBranchStatus("JetMediumTagged_outside_lead_AK15Jet_Pt",1)
 chain.SetBranchStatus("JetMediumTagged_outside_lead_AK15Jet_Eta",1)
 chain.SetBranchStatus("JetMediumTagged_outside_lead_AK15Jet_Flav",1)
 
+chain.SetBranchStatus("N_HEM_Jets",1)
+chain.SetBranchStatus("DeltaPhi_AK4Jet_Hadr_Recoil",1)
+chain.SetBranchStatus("N_Taus",1)
+
 N_Jets = array('i',[-1])
 N_Jets_AK15 = array('i',[-1])
 N_BTagsL = array('i',[-1])
@@ -58,9 +62,13 @@ LooseTaggedJet_Pt = array('f',30*[-1])
 LooseTaggedJet_Eta = array('f',30*[-1])
 LooseTaggedJet_Flav = array('f',30*[-1])
 
-TaggedJet_Pt = array('f',30*[-1])
-TaggedJet_Eta = array('f',30*[-1])
-TaggedJet_Flav = array('f',30*[-1])
+MediumTaggedJet_Pt = array('f',30*[-1])
+MediumTaggedJet_Eta = array('f',30*[-1])
+MediumTaggedJet_Flav = array('f',30*[-1])
+
+N_HEM_Jets = array('i',[-1])
+N_Taus = array('i',[-1])
+DeltaPhi_AK4Jet_Hadr_Recoil = array('f',30*[-1])
 
 chain.SetBranchAddress("N_AK15Jets",N_Jets_AK15)
 chain.SetBranchAddress("Hadr_Recoil_Pt",Hadr_Recoil_Pt)
@@ -76,9 +84,9 @@ chain.SetBranchAddress("LooseTaggedJet_Pt",LooseTaggedJet_Pt)
 chain.SetBranchAddress("LooseTaggedJet_Eta",LooseTaggedJet_Eta)
 chain.SetBranchAddress("LooseTaggedJet_Flav",LooseTaggedJet_Flav)
 
-chain.SetBranchAddress("MediumTaggedJet_Pt",TaggedJet_Pt)
-chain.SetBranchAddress("MediumTaggedJet_Eta",TaggedJet_Eta)
-chain.SetBranchAddress("MediumTaggedJet_Flav",TaggedJet_Flav)
+chain.SetBranchAddress("MediumTaggedJet_Pt",MediumTaggedJet_Pt)
+chain.SetBranchAddress("MediumTaggedJet_Eta",MediumTaggedJet_Eta)
+chain.SetBranchAddress("MediumTaggedJet_Flav",MediumTaggedJet_Flav)
 
 # Jets outside of AK15
 N_BTagsM_outside = array('i',[-1])
@@ -119,6 +127,10 @@ chain.SetBranchAddress("JetMediumTagged_outside_lead_AK15Jet_Pt",JetMediumTagged
 chain.SetBranchAddress("JetMediumTagged_outside_lead_AK15Jet_Eta",JetMediumTagged_outside_lead_AK15Jet_Eta)
 chain.SetBranchAddress("JetMediumTagged_outside_lead_AK15Jet_Flav",JetMediumTagged_outside_lead_AK15Jet_Flav)
 
+chain.SetBranchAddress("N_HEM_Jets",N_HEM_Jets)
+chain.SetBranchAddress("N_Taus",N_Taus)
+chain.SetBranchAddress("DeltaPhi_AK4Jet_Hadr_Recoil",DeltaPhi_AK4Jet_Hadr_Recoil)
+
 binning_pt = [20.,30.,50.,70.,100.,140.,200.,300.,600.,1000.]
 # binning_eta = [0.,1.4,2.0,2.5]
 binning_eta = [0.,2.5]
@@ -143,12 +155,20 @@ for i in range(n_all):
         continue
     if Hadr_Recoil_Pt[0] < 250:
         continue
+    if N_HEM_Jets[0]>0:
+        continue
+    if N_Taus[0]>0:
+        continue
+    if N_Jets[0] == 0:
+        continue
+    if min(DeltaPhi_AK4Jet_Hadr_Recoil[0:N_Jets[0]])<0.8:
+        continue
     for k in range(N_Jets[0]):
         all_jets.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
     for l in range(N_BTagsL[0]):
         loose_btagged_jets.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
     for m in range(N_BTagsM[0]):
-        medium_btagged_jets.Fill(TaggedJet_Pt[m],abs(TaggedJet_Eta[m]),TaggedJet_Flav[m])
+        medium_btagged_jets.Fill(MediumTaggedJet_Pt[m],abs(MediumTaggedJet_Eta[m]),MediumTaggedJet_Flav[m])
     # jets outside of AK15
     for m in range(N_BTagsM_outside[0]):
         medium_btagged_jets_outside.Fill(JetMediumTagged_outside_lead_AK15Jet_Pt[m],abs(JetMediumTagged_outside_lead_AK15Jet_Eta[m]),JetMediumTagged_outside_lead_AK15Jet_Flav[m])
