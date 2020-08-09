@@ -48,12 +48,28 @@ chain.SetBranchStatus("N_HEM_Jets",1)
 chain.SetBranchStatus("DeltaPhi_AK4Jet_Hadr_Recoil",1)
 chain.SetBranchStatus("N_Taus",1)
 
+chain.SetBranchStatus("N_LooseElectrons",1)
+chain.SetBranchStatus("N_LoosePhotons",1)
+chain.SetBranchStatus("N_LooseMuons",1)
+chain.SetBranchStatus("N_TightMuons",1)
+chain.SetBranchStatus("N_TightElectrons",1)
+chain.SetBranchStatus("M_W_transverse",1)
+chain.SetBranchStatus("Evt_Pt_MET",1)
+
+
 N_Jets = array('i',[-1])
 N_Jets_AK15 = array('i',[-1])
 N_BTagsL = array('i',[-1])
 N_BTagsM = array('i',[-1])
+N_LooseElectrons = array('i',[-1])
+N_LoosePhotons = array('i',[-1])
+N_LooseMuons = array('i',[-1])
+N_TightMuons = array('i',[-1])
+N_TightElectrons = array('i',[-1])
 
 Hadr_Recoil_Pt = array('f',[-1])
+Evt_Pt_MET = array('f',[-1])
+M_W_transverse = array('f',[-1])
 Jet_Pt = array('f',30*[-1])
 Jet_Eta = array('f',30*[-1])
 Jet_Flav = array('f',30*[-1])
@@ -75,6 +91,14 @@ chain.SetBranchAddress("Hadr_Recoil_Pt",Hadr_Recoil_Pt)
 chain.SetBranchAddress("N_Jets",N_Jets)
 chain.SetBranchAddress("N_BTagsL",N_BTagsL)
 chain.SetBranchAddress("N_BTagsM",N_BTagsM)
+chain.SetBranchAddress("N_LooseElectrons",N_LooseElectrons)
+chain.SetBranchAddress("N_LoosePhotons",N_LoosePhotons)
+chain.SetBranchAddress("N_LooseMuons",N_LooseMuons)
+chain.SetBranchAddress("N_TightMuons",N_TightMuons)
+chain.SetBranchAddress("N_TightElectrons",N_TightElectrons)
+chain.SetBranchAddress("M_W_transverse",M_W_transverse)
+chain.SetBranchAddress("Evt_Pt_MET",Evt_Pt_MET)
+
 
 chain.SetBranchAddress("Jet_Pt",Jet_Pt)
 chain.SetBranchAddress("Jet_Eta",Jet_Eta)
@@ -136,13 +160,19 @@ binning_pt = [20.,30.,50.,70.,100.,140.,200.,300.,600.,1000.]
 binning_eta = [0.,2.5]
 binning_flavor = [-0.5,3.5,4.5,5.5]
 
-all_jets = ROOT.TH3D("all_jets","all_jets",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
-loose_btagged_jets = ROOT.TH3D("loose_btagged_jets","loose_btagged_jets",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
-medium_btagged_jets = ROOT.TH3D("medium_btagged_jets","medium_btagged_jets",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+# hadronic
+all_jets_hadronic = ROOT.TH3D("all_jets_hadronic","all_jets_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+loose_btagged_jets_hadronic = ROOT.TH3D("loose_btagged_jets_hadronic","loose_btagged_jets_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+medium_btagged_jets_hadronic = ROOT.TH3D("medium_btagged_jets_hadronic","medium_btagged_jets_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
 
-all_jets_outside = ROOT.TH3D("all_jets_outside","all_jets_outside",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
-loose_btagged_jets_outside = ROOT.TH3D("loose_btagged_jets_outside","loose_btagged_jets_outside",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
-medium_btagged_jets_outside = ROOT.TH3D("medium_btagged_jets_outside","medium_btagged_jets_outside",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+all_jets_outside_hadronic = ROOT.TH3D("all_jets_outside_hadronic","all_jets_outside_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+loose_btagged_jets_outside_hadronic = ROOT.TH3D("loose_btagged_jets_outside_hadronic","loose_btagged_jets_outside_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+medium_btagged_jets_outside_hadronic = ROOT.TH3D("medium_btagged_jets_outside_hadronic","medium_btagged_jets_outside_hadronic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+
+# leptonic
+all_jets_leptonic = ROOT.TH3D("all_jets_leptonic","all_jets_leptonic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+loose_btagged_jets_leptonic = ROOT.TH3D("loose_btagged_jets_leptonic","loose_btagged_jets_leptonic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
+medium_btagged_jets_leptonic = ROOT.TH3D("medium_btagged_jets_leptonic","medium_btagged_jets_leptonic",len(binning_pt)-1,array('f',binning_pt),len(binning_eta)-1,array('f',binning_eta),len(binning_flavor)-1,array('f',binning_flavor))
 
 
 print "looping over",chain.GetEntries(),"events"
@@ -151,57 +181,92 @@ for i in range(n_all):
     if i % 100000 == 0:
         print("{n}/{all} = {frac:.2f} % done".format(n=i, all=n_all, frac=float(i)/float(n_all)*100 ))
     chain.GetEntry(i)
-    if N_Jets_AK15[0] == 0:
+    HEMcut = N_HEM_Jets[0] == 0
+    isHadronic = HEMcut and N_Jets_AK15[0]>0 and Hadr_Recoil_Pt[0]>250. and N_Taus[0]==0 and N_Jets[0]>0\
+                        and min(DeltaPhi_AK4Jet_Hadr_Recoil[0:N_Jets[0]])<0.8
+    isLeptonic = HEMcut and Evt_Pt_MET[0]>100. and N_LoosePhotons[0]==0 and (N_LooseElectrons[0]+N_LooseMuons[0])==1\
+                        and (N_TightElectrons[0]+N_TightMuons[0])==1 and Jet_Pt[0]>50. and M_W_transverse[0]>=40.
+    if (not isHadronic) and (not isLeptonic):
         continue
-    if Hadr_Recoil_Pt[0] < 250:
-        continue
-    if N_HEM_Jets[0]>0:
-        continue
-    if N_Taus[0]>0:
-        continue
-    if N_Jets[0] == 0:
-        continue
-    if min(DeltaPhi_AK4Jet_Hadr_Recoil[0:N_Jets[0]])<0.8:
-        continue
+
     for k in range(N_Jets[0]):
-        all_jets.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
+        if isHadronic:
+            all_jets_hadronic.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
+        if isLeptonic:
+            all_jets_leptonic.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
     for l in range(N_BTagsL[0]):
-        loose_btagged_jets.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
+        if isHadronic:
+            loose_btagged_jets_hadronic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
+        if isLeptonic:
+            loose_btagged_jets_leptonic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
     for m in range(N_BTagsM[0]):
-        medium_btagged_jets.Fill(MediumTaggedJet_Pt[m],abs(MediumTaggedJet_Eta[m]),MediumTaggedJet_Flav[m])
-    # jets outside of AK15
-    for m in range(N_BTagsM_outside[0]):
-        medium_btagged_jets_outside.Fill(JetMediumTagged_outside_lead_AK15Jet_Pt[m],abs(JetMediumTagged_outside_lead_AK15Jet_Eta[m]),JetMediumTagged_outside_lead_AK15Jet_Flav[m])
-    for m in range(N_BTagsL_outside[0]):
-        loose_btagged_jets_outside.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
-        all_jets_outside.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
-    for k in range(N_untagged_loose_outside[0]):
-        all_jets_outside.Fill(JetLooseUntagged_outside_lead_AK15Jet_Pt[k],abs(JetLooseUntagged_outside_lead_AK15Jet_Eta[k]),JetLooseUntagged_outside_lead_AK15Jet_Flav[k])
+        if isHadronic:
+            medium_btagged_jets_hadronic.Fill(MediumTaggedJet_Pt[m],abs(MediumTaggedJet_Eta[m]),MediumTaggedJet_Flav[m])
+        if isLeptonic:
+            medium_btagged_jets_leptonic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
+   # jets outside of AK15 -> only for hadronic
+    if isHadronic:
+        for m in range(N_BTagsM_outside[0]):
+            medium_btagged_jets_outside_hadronic.Fill(JetMediumTagged_outside_lead_AK15Jet_Pt[m],abs(JetMediumTagged_outside_lead_AK15Jet_Eta[m]),JetMediumTagged_outside_lead_AK15Jet_Flav[m])
+        for m in range(N_BTagsL_outside[0]):
+            loose_btagged_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
+            all_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
+        for k in range(N_untagged_loose_outside[0]):
+            all_jets_outside_hadronic.Fill(JetLooseUntagged_outside_lead_AK15Jet_Pt[k],abs(JetLooseUntagged_outside_lead_AK15Jet_Eta[k]),JetLooseUntagged_outside_lead_AK15Jet_Flav[k])
 
-loose_btagging_efficiency = loose_btagged_jets.Clone()
-loose_btagging_efficiency.SetName("loose_btagging_efficiency")
-loose_btagging_efficiency.SetTitle("loose_btagging_efficiency")
-loose_btagging_efficiency.Divide(all_jets)
+#  hadronic efficiencies
+loose_btagging_efficiency_hadronic = loose_btagged_jets_hadronic.Clone()
+loose_btagging_efficiency_hadronic.SetName("loose_btagging_efficiency_hadronic")
+loose_btagging_efficiency_hadronic.SetTitle("loose_btagging_efficiency_hadronic")
+loose_btagging_efficiency_hadronic.Divide(all_jets_hadronic)
 
-medium_btagging_efficiency = medium_btagged_jets.Clone()
-medium_btagging_efficiency.SetName("medium_btagging_efficiency")
-medium_btagging_efficiency.SetTitle("medium_btagging_efficiency")
-medium_btagging_efficiency.Divide(all_jets)
+medium_btagging_efficiency_hadronic = medium_btagged_jets_hadronic.Clone()
+medium_btagging_efficiency_hadronic.SetName("medium_btagging_efficiency_hadronic")
+medium_btagging_efficiency_hadronic.SetTitle("medium_btagging_efficiency_hadronic")
+medium_btagging_efficiency_hadronic.Divide(all_jets_hadronic)
 
-loose_btagging_efficiency_outside = loose_btagged_jets_outside.Clone()
-loose_btagging_efficiency_outside.SetName("loose_btagging_efficiency_outside")
-loose_btagging_efficiency_outside.SetTitle("loose_btagging_efficiency_outside")
-loose_btagging_efficiency_outside.Divide(all_jets_outside)
+loose_btagging_efficiency_outside_hadronic = loose_btagged_jets_outside_hadronic.Clone()
+loose_btagging_efficiency_outside_hadronic.SetName("loose_btagging_efficiency_outside_hadronic")
+loose_btagging_efficiency_outside_hadronic.SetTitle("loose_btagging_efficiency_outside_hadronic")
+loose_btagging_efficiency_outside_hadronic.Divide(all_jets_outside_hadronic)
 
-medium_btagging_efficiency_outside = medium_btagged_jets_outside.Clone()
-medium_btagging_efficiency_outside.SetName("medium_btagging_efficiency_outside")
-medium_btagging_efficiency_outside.SetTitle("medium_btagging_efficiency_outside")
-medium_btagging_efficiency_outside.Divide(all_jets_outside)
+medium_btagging_efficiency_outside_hadronic = medium_btagged_jets_outside_hadronic.Clone()
+medium_btagging_efficiency_outside_hadronic.SetName("medium_btagging_efficiency_outside_hadronic")
+medium_btagging_efficiency_outside_hadronic.SetTitle("medium_btagging_efficiency_outside_hadronic")
+medium_btagging_efficiency_outside_hadronic.Divide(all_jets_outside_hadronic)
+
+# leptonic efficiencies
+loose_btagging_efficiency_leptonic = loose_btagged_jets_leptonic.Clone()
+loose_btagging_efficiency_leptonic.SetName("loose_btagging_efficiency_leptonic")
+loose_btagging_efficiency_leptonic.SetTitle("loose_btagging_efficiency_leptonic")
+loose_btagging_efficiency_leptonic.Divide(all_jets_leptonic)
+
+medium_btagging_efficiency_leptonic = medium_btagged_jets_leptonic.Clone()
+medium_btagging_efficiency_leptonic.SetName("medium_btagging_efficiency_leptonic")
+medium_btagging_efficiency_leptonic.SetTitle("medium_btagging_efficiency_leptonic")
+medium_btagging_efficiency_leptonic.Divide(all_jets_leptonic)
 
 output_file = ROOT.TFile.Open("btag_efficiencies_"+label+".root","RECREATE")
 
-for hist3D in [ all_jets,loose_btagged_jets,medium_btagged_jets,loose_btagging_efficiency,medium_btagging_efficiency,
-                all_jets_outside,loose_btagged_jets_outside,medium_btagged_jets_outside,loose_btagging_efficiency_outside,medium_btagging_efficiency_outside]:
+for hist3D in [
+        all_jets_hadronic,
+        loose_btagged_jets_hadronic,
+        medium_btagged_jets_hadronic,
+        loose_btagging_efficiency_hadronic,
+        medium_btagging_efficiency_hadronic,
+
+        all_jets_outside_hadronic,
+        loose_btagged_jets_outside_hadronic,
+        medium_btagged_jets_outside_hadronic,
+        loose_btagging_efficiency_outside_hadronic,
+        medium_btagging_efficiency_outside_hadronic,
+
+        all_jets_leptonic,
+        loose_btagged_jets_leptonic,
+        medium_btagged_jets_leptonic,
+        loose_btagging_efficiency_leptonic,
+        medium_btagging_efficiency_leptonic
+    ]:
     hist3D.GetXaxis().SetTitle("p_{T}")
     hist3D.GetYaxis().SetTitle("|#eta|")
     hist3D.GetZaxis().SetTitle("hadron flavor")
