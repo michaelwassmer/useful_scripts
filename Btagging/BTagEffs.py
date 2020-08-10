@@ -202,23 +202,23 @@ for i in range(n_all):
             all_jets_hadronic.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
         if isLeptonic:
             all_jets_leptonic.Fill(Jet_Pt[k],abs(Jet_Eta[k]),Jet_Flav[k])
-    for l in range(N_BTagsL[0]):
+    for k in range(N_BTagsL[0]):
         if isHadronic:
-            loose_btagged_jets_hadronic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
+            loose_btagged_jets_hadronic.Fill(LooseTaggedJet_Pt[k],abs(LooseTaggedJet_Eta[k]),LooseTaggedJet_Flav[k])
         if isLeptonic:
-            loose_btagged_jets_leptonic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
-    for m in range(N_BTagsM[0]):
+            loose_btagged_jets_leptonic.Fill(LooseTaggedJet_Pt[k],abs(LooseTaggedJet_Eta[k]),LooseTaggedJet_Flav[k])
+    for k in range(N_BTagsM[0]):
         if isHadronic:
-            medium_btagged_jets_hadronic.Fill(MediumTaggedJet_Pt[m],abs(MediumTaggedJet_Eta[m]),MediumTaggedJet_Flav[m])
+            medium_btagged_jets_hadronic.Fill(MediumTaggedJet_Pt[k],abs(MediumTaggedJet_Eta[k]),MediumTaggedJet_Flav[k])
         if isLeptonic:
-            medium_btagged_jets_leptonic.Fill(MediumTaggedJet_Pt[l],abs(MediumTaggedJet_Eta[l]),MediumTaggedJet_Flav[l])
+            medium_btagged_jets_leptonic.Fill(MediumTaggedJet_Pt[k],abs(MediumTaggedJet_Eta[k]),MediumTaggedJet_Flav[k])
    # jets outside of AK15 -> only for hadronic
     if isHadronic:
-        for m in range(N_BTagsM_outside[0]):
-            medium_btagged_jets_outside_hadronic.Fill(JetMediumTagged_outside_lead_AK15Jet_Pt[m],abs(JetMediumTagged_outside_lead_AK15Jet_Eta[m]),JetMediumTagged_outside_lead_AK15Jet_Flav[m])
-        for m in range(N_BTagsL_outside[0]):
-            loose_btagged_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
-            all_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[m],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[m]),JetLooseTagged_outside_lead_AK15Jet_Flav[m])
+        for k in range(N_BTagsM_outside[0]):
+            medium_btagged_jets_outside_hadronic.Fill(JetMediumTagged_outside_lead_AK15Jet_Pt[k],abs(JetMediumTagged_outside_lead_AK15Jet_Eta[k]),JetMediumTagged_outside_lead_AK15Jet_Flav[k])
+        for k in range(N_BTagsL_outside[0]):
+            loose_btagged_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[k],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[k]),JetLooseTagged_outside_lead_AK15Jet_Flav[k])
+            all_jets_outside_hadronic.Fill(JetLooseTagged_outside_lead_AK15Jet_Pt[k],abs(JetLooseTagged_outside_lead_AK15Jet_Eta[k]),JetLooseTagged_outside_lead_AK15Jet_Flav[k])
         for k in range(N_untagged_loose_outside[0]):
             all_jets_outside_hadronic.Fill(JetLooseUntagged_outside_lead_AK15Jet_Pt[k],abs(JetLooseUntagged_outside_lead_AK15Jet_Eta[k]),JetLooseUntagged_outside_lead_AK15Jet_Flav[k])
 
