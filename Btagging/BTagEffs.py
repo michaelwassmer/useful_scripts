@@ -211,7 +211,7 @@ for i in range(n_all):
         if isHadronic:
             medium_btagged_jets_hadronic.Fill(MediumTaggedJet_Pt[m],abs(MediumTaggedJet_Eta[m]),MediumTaggedJet_Flav[m])
         if isLeptonic:
-            medium_btagged_jets_leptonic.Fill(LooseTaggedJet_Pt[l],abs(LooseTaggedJet_Eta[l]),LooseTaggedJet_Flav[l])
+            medium_btagged_jets_leptonic.Fill(MediumTaggedJet_Pt[l],abs(MediumTaggedJet_Eta[l]),MediumTaggedJet_Flav[l])
    # jets outside of AK15 -> only for hadronic
     if isHadronic:
         for m in range(N_BTagsM_outside[0]):
