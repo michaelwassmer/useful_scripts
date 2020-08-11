@@ -92,21 +92,21 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         # some sanity checks for the bins (optional)
         if not options.warnings and i > 0 and i <= histo_nbins:
             print_bin_info = False
-            if bin_content < 1e-1:# or bin_error < 1e-1:
-                #print ("bin content or error are very small, please check!")
+            if bin_content <= 0.:# or bin_error < 1e-1:
+                print ("bin content zero or negative, please check!")
                 print_bin_info = True
             #if bin_ratio != None and bin_ratio > 1.0:
                 #print ("ratio of bin error and content is very large, please check!")
                 #print_bin_info = True
-            if object.GetEntries() < 10.:
+            if object.GetEntries() < 10:
                 print ("template has less than 10 entries, please check!")
                 print_bin_info = True
             if print_bin_info:
                 n_problematic_bins += 1
-                #print ("histo: ", object.GetName())
-                #print ("bin number: ", i)
-                #print ("bin content: ", round(bin_content, 4))
-                #print ("bin error: ", round(bin_error, 4))
+                print ("histo: ", object.GetName())
+                print ("bin number: ", i)
+                print ("bin content: ", round(bin_content, 4))
+                print ("bin error: ", round(bin_error, 4))
                 #print (
                     #"bin ratio: ",
                     #round(bin_ratio, 4) if bin_ratio != None else bin_ratio,
@@ -115,7 +115,7 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                 if options.repair:
                     #print ("setting bin to default!")
                     bin_content = 0.1
-                    bin_error = 0.0
+                    bin_error = 0.1
         if i==0 or i==(histo_nbins+1):
             bin_content = 0.0
             bin_error = 0.0

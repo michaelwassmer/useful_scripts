@@ -21,7 +21,10 @@ for i in range(histogram.GetNbinsX(),0,-1):
     if relative_uncertainty > acceptable_uncertainty:
         content += histogram.GetBinContent(i)
         error_squared += math.pow(histogram.GetBinError(i),2)
-        relative_uncertainty = math.sqrt(error_squared)*1.0/content
+        try:
+            relative_uncertainty = math.sqrt(error_squared)*1.0/content
+        except ZeroDivisionError:
+            relative_uncertainty = 100000.
         #print content
         #print error_squared
         #print relative_uncertainty

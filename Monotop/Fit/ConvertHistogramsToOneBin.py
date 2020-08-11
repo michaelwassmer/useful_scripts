@@ -107,13 +107,13 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         # some sanity checks for the bins (optional)
         if not options.warnings and i > 0 and i <= histo_nbins:
             print_bin_info = False
-            if bin_content < 1e-1 or bin_error < 1e-1:
-                print ("bin content or error are very small, please check!")
+            if bin_content <= 0.0:
+                print ("bin content zero or negative, please check!")
                 print_bin_info = True
             #if bin_ratio != None and bin_ratio > 1.0:
                 #print ("ratio of bin error and content is very large, please check!")
                 #print_bin_info = True
-            if object.GetEntries() < 10.:
+            if object.GetEntries() < 10:
                 print ("template has less than 10 entries, please check!")
                 print_bin_info = True
             if print_bin_info:
@@ -134,7 +134,7 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                 elif options.repair:
                     print ("setting bin to default!")
                     bin_content = 0.1
-                    bin_error = 0.0
+                    bin_error = 0.1
         # create a new histogram with only one bin
         histo_one_bin = ROOT.TH1F(
             histo_name + "_" + "bin" + "_" + str(i),

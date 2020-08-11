@@ -115,6 +115,7 @@ for i in range(len(options.signal_processes)):
         transfer_factors.SetName(transfer_factors_name)
         transfer_factors.SetTitle(transfer_factors_name)
         transfer_factors.Divide(histo_signal)
+        #transfer_factors.Divide(histo_signal_nominal)
         transfer_factors.SetDirectory(0)
         output_file.WriteTObject(transfer_factors)
 
