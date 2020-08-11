@@ -51,7 +51,46 @@ def K_TH(QCD_ORDER, EW_ORDER, e_QCD=[], e_EW=[], e_MIX=0.0):
         print "error"
         exit()
     dK_MIX.Scale(e_MIX)
-    return prod + dK_MIX
+    k_factor = prod + dK_MIX
+    str_QCD = ""
+    str_EW = ""
+    str_MIX = ""
+    for e in e_QCD:
+        str_QCD += str_dict[e]
+    for e in e_EW:
+        str_EW += str_dict[e]
+    str_MIX += str_dict[e_MIX]
+    k_factor.SetName(
+        process
+        + "_"
+        + "K"
+        + "_"
+        + QCD_ORDER
+        + "_"
+        + EW_ORDER
+        + "_"
+        + str_QCD
+        + "_"
+        + str_EW
+        + "_"
+        + str_MIX
+    )
+    k_factor.SetTitle(
+        process
+        + "_"
+        + "K"
+        + "_"
+        + QCD_ORDER
+        + "_"
+        + EW_ORDER
+        + "_"
+        + str_QCD
+        + "_"
+        + str_EW
+        + "_"
+        + str_MIX
+    )
+    return k_factor
 
 
 def sigma_TH(QCD_ORDER, EW_ORDER, e_QCD=[], e_EW=[], e_MIX=0.0):
@@ -121,6 +160,18 @@ output_hists = [
 ]
 print (len(output_hists))
 
+k_factors = [
+    K_TH("LO", "NLO", [e_QCD1, e_QCD2, e_QCD3], [e_EW1, e_EW2, e_EW3], e_MIX)
+    for e_QCD1 in [1, 0, -1]
+    for e_QCD2 in [1, 0, -1]
+    for e_QCD3 in [1, 0, -1]
+    for e_EW1 in [1, 0, -1]
+    for e_EW2 in [1, 0, -1]
+    for e_EW3 in [1, 0, -1]
+    for e_MIX in [1, 0, -1]
+]
+
+
 
 file_mc = None
 hist_mc = None
@@ -142,6 +193,8 @@ else:
 
 for hist in output_hists:
     hist.Divide(hist_mc)
+    output.WriteTObject(hist)
+for hist in k_factors:
     output.WriteTObject(hist)
 
 # muR muF variations of mc sample
