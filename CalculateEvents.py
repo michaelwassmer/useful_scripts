@@ -11,7 +11,8 @@ def Count():
     geninfo = FWLite.Handle('GenEventInfoProduct')
     lheinfo = FWLite.Handle('LHEEventProduct')
     label_gen =	'generator'
-    label_lhe = 'externalLHEProducer'
+    #label_lhe = 'externalLHEProducer'
+    label_lhe = 'source'
     weight_sum_gen = 0
     weight_sum_lhe = 0
     event_sum = 0
@@ -30,12 +31,11 @@ def Count():
         if event_sum % 10000 == 0:
             print event_sum
         
-    print "GEN: ",weight_sum_gen/event_sum
-    print "LHE: ",weight_sum_lhe/event_sum
+    print "GEN: sum of event weights / number of events ",weight_sum_gen*1.0/event_sum
+    print "LHE: sum of event weights / number of events ",weight_sum_lhe*1.0/event_sum
     print "#neg./#all. ",neg_sum*1.0/event_sum
     print "#pos-#neg/#pos+#neg ",(event_sum-2*neg_sum)*1.0/(event_sum)
     print "sum of all weighted events: ",weight_sum_gen
-    print "sum weighted events divided by sum unweighted events: ",weight_sum_gen*1.0/event_sum
 
 def main():
     Count()
