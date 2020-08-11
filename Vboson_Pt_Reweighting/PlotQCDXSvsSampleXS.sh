@@ -1,0 +1,8 @@
+rootplot rootplot_config.py QCDXSvsSampleXS.root vvj_pTV_LO vvj_pTV_NLO vvj_pTV_NNLO Zvv_boson_pt --size=1024x768 --xlabel="p_{T,#nu#bar{#nu}}[GeV]" --ylabel="#sigma" --legend-location='upper right' --gridx --gridy -e pdf --output="PlotQCDXSvsSampleXS" --noclean --title='Z(#nu#bar{#nu})' --legend-entries='LO,NLO,NNLO,MC' --xmin=100 --xmax=3000 -m --ymin=0.000001 --ymax=100 --logy
+mv PlotQCDXSvsSampleXS/plot.pdf PlotQCDXSvsSampleXS/Zvv.pdf
+rootplot rootplot_config.py QCDXSvsSampleXS.root eej_pTV_LO eej_pTV_NLO eej_pTV_NNLO Zll_boson_pt --size=1024x768 --xlabel="p_{T,l#bar{l}}[GeV]" --ylabel="#sigma" --legend-location='upper right' --gridx --gridy -e pdf --output="PlotQCDXSvsSampleXS" --noclean --title='Z(l#bar{l})' --legend-entries='LO,NLO,NNLO,MC' --xmin=100 --xmax=3000 -m --ymin=0.000001 --ymax=100 --logy
+mv PlotQCDXSvsSampleXS/plot.pdf PlotQCDXSvsSampleXS/Zll.pdf
+rootplot rootplot_config.py QCDXSvsSampleXS.root evj_pTV_LO evj_pTV_NLO evj_pTV_NNLO W_boson_pt --size=1024x768 --xlabel="p_{T,l#bar{#nu}}[GeV]" --ylabel="#sigma" --legend-location='upper right' --gridx --gridy -e pdf --output="PlotQCDXSvsSampleXS" --noclean --title='W(l#bar{#nu})' --legend-entries='LO,NLO,NNLO,MC' --xmin=100 --xmax=3000 -m --ymin=0.000001 --ymax=1000 --logy
+mv PlotQCDXSvsSampleXS/plot.pdf PlotQCDXSvsSampleXS/W.pdf
+rootplot rootplot_config.py QCDXSvsSampleXS.root aj_pTV_LO aj_pTV_NLO aj_pTV_NNLO G_boson_pt --size=1024x768 --xlabel="p_{T,#gamma}[GeV]" --ylabel="#sigma" --legend-location='upper right' --gridx --gridy -e pdf --output="PlotQCDXSvsSampleXS" --noclean --title='#gamma' --legend-entries='LO,NLO,NNLO,MC' --xmin=100 --xmax=3000 -m --ymin=0.000001 --ymax=1000 --logy
+mv PlotQCDXSvsSampleXS/plot.pdf PlotQCDXSvsSampleXS/G.pdf
