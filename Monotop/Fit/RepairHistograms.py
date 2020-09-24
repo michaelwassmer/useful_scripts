@@ -74,6 +74,14 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         print ("no ", options.variable, " in histogram name")
         print ("continuing ...")
         continue
+    if "vectormonotop" in histo_name and "CR" in histo_name:
+        print ("signal template in control region, not necessary ...")
+        print ("continuing ...")
+        continue
+    if "signal" in histo_name and not "vectormonotop" in histo_name:
+        print ("signal uncertainty for background process, not necessary ...")
+        print ("continuing ...")
+        continue
     # get some information from the histogram
     histo_title = object.GetTitle()
     histo_nbins = object.GetNbinsX()

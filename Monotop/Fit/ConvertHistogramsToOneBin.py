@@ -41,6 +41,14 @@ parser.add_option(
     help="set this options if you want to set the problematic bins to a default of 0.1",
     default=False
 )
+parser.add_option(
+    "-t",
+    "--transferfactor",
+    action="store_true",
+    dest="transferfactor",
+    help="set this option if you run over transfer factors",
+    default=False,
+)
 (options, args) = parser.parse_args()
 
 # catch some errors
@@ -117,9 +125,14 @@ for j, key in enumerate(input_file.GetListOfKeys()):
             #if bin_ratio != None and bin_ratio > 1.0:
                 #print ("ratio of bin error and content is very large, please check!")
                 #print_bin_info = True
-            if object.GetEntries() < 10:
+            if object.GetEntries() < 10 and not options.transferfactor:
                 print ("template has less than 10 entries, please check!")
                 print_bin_info = True
+            if options.transferfactor:
+                if bin_content > 100.:
+                    print ("transfer factor greater than 100, please check!")
+                    print_bin_info = True
+                    #exit()
             if print_bin_info:
                 n_problematic_bins += 1
                 print ("histo: ", object.GetName())
@@ -136,9 +149,20 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                     print ("bin dropped!")
                     continue
                 elif options.repair:
-                    print ("setting bin to default!")
-                    bin_content = 0.1
-                    bin_error = 0.1
+                    if not options.transferfactor:
+                        print ("setting bin to default!")
+                        bin_content = 0.1
+                        bin_error = 0.1
+                    else:
+                        if bin_content <= 0.0:
+                            print ("setting transfer factor to 0.01")
+                            bin_content = 0.01
+                            bin_error = 0.01
+                        elif bin_content > 100.:
+                            print ("setting transfer factor to 100")
+                            exit()
+                            bin_content = 100.
+                            bin_error = 100.
         # create a new histogram with only one bin
         histo_one_bin = ROOT.TH1F(
             histo_name + "_" + "bin" + "_" + str(i),
