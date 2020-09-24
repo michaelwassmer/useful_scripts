@@ -10,7 +10,7 @@ ROOT.gStyle.SetTitleOffset(1.0,"Y")
 ROOT.gStyle.SetTitleSize(0.045,"X")
 ROOT.gStyle.SetTitleSize(0.045,"Y")
 ROOT.gStyle.SetTitleSize(0.04,"T")
-ROOT.gStyle.SetLegendTextSize(0.045)
+ROOT.gStyle.SetLegendTextSize(0.04)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -142,9 +142,9 @@ options_by_histname = [
 
 #### Legend
 legend_width = 0.22       # Fraction of canvas width
-legend_entry_height = 0.1 # Fraction of canvas height
+legend_entry_height = 0.08 # Fraction of canvas height
 max_legend_height = 0.40    # Fraction of canvas height
-legend_left_bound = 0.20   # For left justification
+legend_left_bound = 0.15   # For left justification
 legend_right_bound = 0.85  # For right justification
 legend_upper_bound = 0.875  # For top justification
 legend_lower_bound = 0.15  # For bottom justification
