@@ -2,6 +2,7 @@ import sys
 import ROOT
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(0)
+ROOT.gStyle.SetPaintTextFormat("1.2f")
 
 label = sys.argv[1]
 infile = sys.argv[2]
@@ -24,6 +25,7 @@ for eff in effs:
     c.SetRightMargin(0.15)
     c.SetBottomMargin(0.1)
     eff_hist = file.Get(eff).Project3D("xz")
+    eff_hist.SetContour(100)
     if "hadronic" in eff:
         eff_hist.SetTitle("hadronic analysis channel, "+year)
     elif "leptonic" in eff:
@@ -34,6 +36,7 @@ for eff in effs:
     eff_hist.GetYaxis().SetTitleOffset(0.95)
     eff_hist.GetYaxis().SetTitleSize(0.05)
     eff_hist.GetYaxis().SetLabelSize(0.04)
+    c.SetLogy(1)
     eff_hist.GetXaxis().SetTitleSize(0.05)
     eff_hist.GetXaxis().SetTitleOffset(0.9)
     eff_hist.GetXaxis().SetLabelSize(0.04)
@@ -41,5 +44,6 @@ for eff in effs:
     eff_hist.GetZaxis().SetTitleSize(0.05)
     eff_hist.GetZaxis().SetTitleOffset(0.9)
     eff_hist.GetZaxis().SetLabelSize(0.04)
-    eff_hist.Draw("colz")
+    eff_hist.SetMarkerSize(2.0)
+    eff_hist.Draw("colztext")
     c.Print(eff+"_"+label+".pdf")
