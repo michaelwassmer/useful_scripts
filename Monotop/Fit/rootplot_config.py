@@ -7,10 +7,14 @@ ROOT.gStyle.SetTitleY(0.95)
 ROOT.gStyle.SetTitleX(0.8)
 ROOT.gStyle.SetTitleOffset(0.85,"X")
 ROOT.gStyle.SetTitleOffset(1.0,"Y")
-ROOT.gStyle.SetTitleSize(0.045,"X")
-ROOT.gStyle.SetTitleSize(0.045,"Y")
-ROOT.gStyle.SetTitleSize(0.04,"T")
-ROOT.gStyle.SetLegendTextSize(0.04)
+ROOT.gStyle.SetTitleSize(0.05,"X")
+ROOT.gStyle.SetTitleSize(0.05,"Y")
+ROOT.gStyle.SetLabelSize(0.05,"X")
+ROOT.gStyle.SetLabelSize(0.05,"Y")
+ROOT.gStyle.SetTitleOffset(1.2,"Y")
+ROOT.gStyle.SetTitleSize(0.045,"T")
+ROOT.gStyle.SetLegendTextSize(0.05)
+ROOT.gStyle.SetPadLeftMargin(0.12)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -141,7 +145,7 @@ options_by_histname = [
                        ]
 
 #### Legend
-legend_width = 0.22       # Fraction of canvas width
+legend_width = 0.25       # Fraction of canvas width
 legend_entry_height = 0.08 # Fraction of canvas height
 max_legend_height = 0.40    # Fraction of canvas height
 legend_left_bound = 0.15   # For left justification
@@ -178,12 +182,12 @@ decoration_root = '''
 ## Add a caption
 tt_bla = ROOT.TText()
 tt_bla.SetTextFont(63)
-tt_bla.SetTextSizePixels(35)
-tt_bla.DrawTextNDC(0.1, 0.95, "CMS simulation")
+tt_bla.SetTextSizePixels(40)
+tt_bla.DrawTextNDC(0.12, 0.95, "CMS simulation")
 tt_wip = ROOT.TText()
 tt_wip.SetTextFont(63)
-tt_wip.SetTextSizePixels(25)
-tt_wip = tt_wip.DrawTextNDC(0.1, 0.91, "work in progress")
+tt_wip.SetTextSizePixels(30)
+tt_wip = tt_wip.DrawTextNDC(0.12, 0.91, "work in progress")
 '''
 
 ##############################################################################

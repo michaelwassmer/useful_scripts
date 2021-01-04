@@ -111,11 +111,21 @@ for i in range(len(options.signal_processes)):
         else:
             continue
         transfer_factors_name = transfer_factors_nominal_name + systematic
-        transfer_factors = histo_background.Clone()
+        transfer_factors = None
+        #transfer_factors = histo_background.Clone()
+        if (("evj" in systematic) or ("eej" in systematic) or ("aj" in systematic)):
+            print("uncorrelated background systematic ",systematic)
+            transfer_factors = histo_background.Clone()
+            transfer_factors.Divide(histo_signal_nominal)
+        elif ("vvj" in systematic):
+            print("uncorrelated signal systematic ",systematic)
+            transfer_factors = histo_background_nominal.Clone()
+            transfer_factors.Divide(histo_signal)
+        else:
+            transfer_factors = histo_background.Clone()
+            transfer_factors.Divide(histo_signal)
         transfer_factors.SetName(transfer_factors_name)
         transfer_factors.SetTitle(transfer_factors_name)
-        transfer_factors.Divide(histo_signal)
-        #transfer_factors.Divide(histo_signal_nominal)
         transfer_factors.SetDirectory(0)
         output_file.WriteTObject(transfer_factors)
 

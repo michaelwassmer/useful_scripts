@@ -86,18 +86,22 @@ for j, key in enumerate(input_file.GetListOfKeys()):
     object = input_file.Get(key.GetName())
     # check if the opened object is a ROOT histogram
     if not isinstance(object, ROOT.TH1):
-        print ("no TH1")
-        print ("continuing ...")
+        #print ("no TH1")
+        #print ("continuing ...")
         continue
     histo_name = object.GetName()
     # check if the opened object is one of the correct histograms
     if options.variable not in histo_name:
-        print ("no ", options.variable, " in histogram name")
-        print ("continuing ...")
+        #print ("no ", options.variable, " in histogram name")
+        #print ("continuing ...")
         continue
     if "vectormonotop" in histo_name and "CR" in histo_name:
-        print ("signal template in control region, not necessary ...")
-        print ("continuing ...")
+        #print ("signal template in control region, not necessary ...")
+        #print ("continuing ...")
+        continue
+    if "signal" in histo_name and not "vectormonotop" in histo_name:
+        #print ("signal uncertainty for background process, not necessary ...")
+        #print ("continuing ...")
         continue
     # get some information from the histogram
     histo_title = object.GetTitle()
