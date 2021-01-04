@@ -5,11 +5,15 @@ ROOT.gStyle.SetTextFont(43)
 ROOT.gStyle.SetTitleW(2)
 ROOT.gStyle.SetTitleY(0.97)
 ROOT.gStyle.SetTitleOffset(1.1,"X")
-ROOT.gStyle.SetTitleOffset(1.3,"Y")
-ROOT.gStyle.SetTitleSize(0.04,"X")
-ROOT.gStyle.SetTitleSize(0.04,"Y")
-ROOT.gStyle.SetLegendTextSize(0.04)
-ROOT.gStyle.SetPadRightMargin(0.12)
+ROOT.gStyle.SetTitleOffset(1.1,"Y")
+ROOT.gStyle.SetTitleSize(0.05,"X")
+ROOT.gStyle.SetTitleSize(0.05,"Y")
+ROOT.gStyle.SetLabelSize(0.045,"Y")
+ROOT.gStyle.SetLabelSize(0.045,"X")
+ROOT.gStyle.SetLegendTextSize(0.045)
+ROOT.gStyle.SetPadRightMargin(0.05)
+ROOT.gStyle.SetPadLeftMargin(0.11)
+ROOT.gStyle.SetPadBottomMargin(0.12)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -140,11 +144,11 @@ options_by_histname = [
                        ]
 
 #### Legend
-legend_width = 0.37       # Fraction of canvas width
+legend_width = 0.45       # Fraction of canvas width
 legend_entry_height = 0.05 # Fraction of canvas height
-max_legend_height = 0.35    # Fraction of canvas height
+max_legend_height = 0.50    # Fraction of canvas height
 legend_left_bound = 0.20   # For left justification
-legend_right_bound = 0.85  # For right justification
+legend_right_bound = 0.92  # For right justification
 legend_upper_bound = 0.85  # For top justification
 legend_lower_bound = 0.15  # For bottom justification
 legend_codes = { 1 : 'upper right',
@@ -177,11 +181,11 @@ decoration_root = '''
 ## Add a caption
 tt_bla = ROOT.TText()
 tt_bla.SetTextFont(63)
-tt_bla.SetTextSizePixels(30)
+tt_bla.SetTextSizePixels(40)
 tt_bla.DrawTextNDC(0.1, 0.95, "CMS simulation")
 tt_wip = ROOT.TText()
 tt_wip.SetTextFont(63)
-tt_wip.SetTextSizePixels(20)
+tt_wip.SetTextSizePixels(30)
 tt_wip = tt_wip.DrawTextNDC(0.1, 0.91, "work in progress")
 '''
 
