@@ -20,7 +20,7 @@ elif "2016" in infile:
     year = "2016"
 
 for eff in effs:
-    c=ROOT.TCanvas()
+    c=ROOT.TCanvas("c","c",1000,800)
     c.SetLeftMargin(0.1)
     c.SetRightMargin(0.15)
     c.SetBottomMargin(0.1)
@@ -45,5 +45,6 @@ for eff in effs:
     eff_hist.GetZaxis().SetTitleOffset(0.9)
     eff_hist.GetZaxis().SetLabelSize(0.04)
     eff_hist.SetMarkerSize(2.0)
+    eff_hist.SetMarkerColor(ROOT.kRed)
     eff_hist.Draw("colztext")
     c.Print(eff+"_"+label+".pdf")

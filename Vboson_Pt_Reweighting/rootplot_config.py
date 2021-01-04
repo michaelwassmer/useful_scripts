@@ -4,11 +4,15 @@ ROOT.gStyle.SetHistLineWidth(2)
 ROOT.gStyle.SetTextFont(43)
 ROOT.gStyle.SetTitleW(2)
 ROOT.gStyle.SetTitleY(0.97)
-ROOT.gStyle.SetTitleOffset(1.1,"X")
-ROOT.gStyle.SetTitleOffset(1.3,"Y")
-ROOT.gStyle.SetTitleSize(0.04,"X")
-ROOT.gStyle.SetTitleSize(0.04,"Y")
+ROOT.gStyle.SetTitleOffset(1.0,"X")
+ROOT.gStyle.SetTitleOffset(0.95,"Y")
+ROOT.gStyle.SetTitleSize(0.055,"X")
+ROOT.gStyle.SetTitleSize(0.055,"Y")
 ROOT.gStyle.SetLegendTextSize(0.05)
+ROOT.gStyle.SetLabelSize(0.045,"Y")
+ROOT.gStyle.SetLabelSize(0.045,"X")
+ROOT.gStyle.SetPadBottomMargin(0.13)
+ROOT.gStyle.SetPadLeftMargin(0.12)
 ##############################################################################
 ######## About Config Files ##################################################
 
@@ -176,12 +180,12 @@ decoration_root = '''
 ## Add a caption
 tt_bla = ROOT.TText()
 tt_bla.SetTextFont(63)
-tt_bla.SetTextSizePixels(30)
-tt_bla.DrawTextNDC(0.1, 0.95, "CMS simulation")
+tt_bla.SetTextSizePixels(35)
+tt_bla.DrawTextNDC(0.12, 0.95, "CMS simulation")
 tt_wip = ROOT.TText()
 tt_wip.SetTextFont(63)
-tt_wip.SetTextSizePixels(20)
-tt_wip = tt_wip.DrawTextNDC(0.1, 0.91, "work in progress")
+tt_wip.SetTextSizePixels(25)
+tt_wip = tt_wip.DrawTextNDC(0.12, 0.91, "work in progress")
 '''
 
 ##############################################################################

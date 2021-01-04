@@ -91,7 +91,7 @@ def print_shell_script(boson, postfix, files, era):
     script += "#!/bin/bash\n"
     script += "export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n"
     script += "source $VO_CMS_SW_DIR/cmsset_default.sh\n"
-    script += "cd /nfs/dust/cms/user/mwassmer/MonoTop/CMSSW_10_2_18/src\n"
+    script += "cd /nfs/dust/cms/user/mwassmer/MonoTop/test/slc7/CMSSW_10_2_18/src\n"
     script += "eval `scram runtime -sh`\n"
     if not os.path.isdir("root_files"):
         os.mkdir("root_files")
@@ -137,7 +137,7 @@ if not (boson == "Zvv" or boson == "Zll" or boson == "W" or boson == "G"):
 files = get_files(str(sys.argv[3]).replace('"', ""))
 print ("number of files: ", len(files))
 print ("number of events: ", sum(element[1] for element in files))
-file_splitting = split_files_into_jobs(files, 1000000)
+file_splitting = split_files_into_jobs(files, 1)
 # print(file_splitting)
 for i, files in enumerate(file_splitting):
     print_shell_script(boson, str(i), files, era)

@@ -143,17 +143,31 @@ chain.SetBranchStatus("DeltaPhi_AK4Jet_MET",1)
 chain.SetBranchStatus("Hadr_Recoil_Pt",1)
 chain.SetBranchStatus("M_W_transverse",1)
 chain.SetBranchStatus("Evt_Pt_MET",1)
+chain.SetBranchStatus("DeltaPhi_AK15Jet_Hadr_Recoil",1)
+chain.SetBranchStatus("CaloMET_PFMET_Recoil_ratio",1)
+chain.SetBranchStatus("N_AK15Jets_SoftDrop",1)
+chain.SetBranchStatus("AK15Jet_CHF",1)
+chain.SetBranchStatus("AK15Jet_NHF",1)
 DeltaPhi_AK4Jet_Hadr_Recoil = array('f',30*[-1])
 DeltaPhi_AK4Jet_MET = array('f',30*[-1])
 Hadr_Recoil_Pt = array('f',[-1])
 M_W_transverse = array('f',[-1])
 Evt_Pt_MET = array('f',[-1])
+DeltaPhi_AK15Jet_Hadr_Recoil = array('f',30*[-1])
+CaloMET_PFMET_Recoil_ratio = array('f',[-1])
+N_AK15Jets_SoftDrop = array('i',[-1])
+AK15Jet_CHF = array('f',30*[-1])
+AK15Jet_NHF = array('f',30*[-1])
 chain.SetBranchAddress("DeltaPhi_AK4Jet_Hadr_Recoil",DeltaPhi_AK4Jet_Hadr_Recoil)
 chain.SetBranchAddress("DeltaPhi_AK4Jet_MET",DeltaPhi_AK4Jet_MET)
 chain.SetBranchAddress("Hadr_Recoil_Pt",Hadr_Recoil_Pt)
 chain.SetBranchAddress("M_W_transverse",M_W_transverse)
 chain.SetBranchAddress("Evt_Pt_MET",Evt_Pt_MET)
-
+chain.SetBranchAddress("DeltaPhi_AK15Jet_Hadr_Recoil",DeltaPhi_AK15Jet_Hadr_Recoil)
+chain.SetBranchAddress("CaloMET_PFMET_Recoil_ratio",CaloMET_PFMET_Recoil_ratio)
+chain.SetBranchAddress("N_AK15Jets_SoftDrop",N_AK15Jets_SoftDrop)
+chain.SetBranchAddress("AK15Jet_CHF",AK15Jet_CHF)
+chain.SetBranchAddress("AK15Jet_NHF",AK15Jet_NHF)
 
 # Jet_Pt_outside = array('f',30*[-1])
 # Jet_Eta_outside = array('f',30*[-1])
@@ -191,7 +205,9 @@ for i in range(n_all):
     chain.GetEntry(i)
     HEMcut = N_HEM_Jets[0] == 0
     isHadronic = HEMcut and N_Jets_AK15[0]>0 and Hadr_Recoil_Pt[0]>250. and N_Taus[0]==0 and N_Jets[0]>0\
-                        and min(DeltaPhi_AK4Jet_Hadr_Recoil[0:N_Jets[0]])>0.8
+                        and min(DeltaPhi_AK4Jet_Hadr_Recoil[0:min(N_Jets[0],4)])>0.5 and DeltaPhi_AK15Jet_Hadr_Recoil[0]>1.5\
+                        and CaloMET_PFMET_Recoil_ratio[0]<0.5 and N_Jets_AK15[0]==N_AK15Jets_SoftDrop[0]\
+                        and AK15Jet_CHF[0]>0.1 and AK15Jet_NHF[0]<0.8
     isLeptonic = HEMcut and Evt_Pt_MET[0]>100. and N_Jets[0]>0 and N_LoosePhotons[0]==0 and (N_LooseElectrons[0]+N_LooseMuons[0])==1\
                         and (N_TightElectrons[0]+N_TightMuons[0])==1 and Jet_Pt[0]>50. and M_W_transverse[0]>=40. and DeltaPhi_AK4Jet_MET[0]>1.5
     if (not isHadronic) and (not isLeptonic):
@@ -281,3 +297,4 @@ for hist3D in [
     output_file.WriteTObject(hist3D)
 
 output_file.Close()
+print "efficiency histograms written to file"
