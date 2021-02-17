@@ -1,0 +1,3 @@
+cmsxrootd.fnal.gov
+xrootd-cms.infn.it
+cms-xrd-global.cern.ch
