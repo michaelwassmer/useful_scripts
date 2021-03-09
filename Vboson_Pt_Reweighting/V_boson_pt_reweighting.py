@@ -5,7 +5,7 @@ import sys
 from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
-from sample_info import sample_dict
+from sample_info_NLO import sample_dict
 
 # ROOT.gSystem.Load('libGenVector')
 
@@ -25,15 +25,15 @@ def FindAllMothers(particle):
 
 # also use muR and muF variations
 scales = {
-    "Weight_scale_variation_muR_1p0_muF_1p0": 1,
-    "Weight_scale_variation_muR_1p0_muF_2p0": 2,
-    "Weight_scale_variation_muR_1p0_muF_0p5": 3,
-    "Weight_scale_variation_muR_2p0_muF_1p0": 4,
-    "Weight_scale_variation_muR_2p0_muF_2p0": 5,
-    "Weight_scale_variation_muR_2p0_muF_0p5": 6,
-    "Weight_scale_variation_muR_0p5_muF_1p0": 7,
-    "Weight_scale_variation_muR_0p5_muF_2p0": 8,
-    "Weight_scale_variation_muR_0p5_muF_0p5": 9,
+    "Weight_scale_variation_muR_1p0_muF_1p0": 1002,
+    "Weight_scale_variation_muR_1p0_muF_2p0": 1005,
+    "Weight_scale_variation_muR_1p0_muF_0p5": 1008,
+    "Weight_scale_variation_muR_2p0_muF_1p0": 1003,
+    "Weight_scale_variation_muR_2p0_muF_2p0": 1006,
+    "Weight_scale_variation_muR_2p0_muF_0p5": 1009,
+    "Weight_scale_variation_muR_0p5_muF_1p0": 1004,
+    "Weight_scale_variation_muR_0p5_muF_2p0": 1007,
+    "Weight_scale_variation_muR_0p5_muF_0p5": 1010,
 }
 
 # inputs
@@ -131,8 +131,11 @@ for filename in filenames:
     # information to calculate cross section weight
     subdict = sample_dict.get(era, None).get(boson, None)
     for key in subdict:
-        if key in filename.lower():
+        if key in filename:
             subsubdict = subdict.get(key, None)
+            print("sigma: ",subsubdict.get("sigma", None))
+            print("X: ",subsubdict.get("X", None))
+            print("N_gen: ",subsubdict.get("N_gen", None))
             weight_xs = subsubdict.get("sigma", None) / (subsubdict.get("X", None) * subsubdict.get("N_gen", None))
     weight_xs *= 1000.0
     print ("weight_xs = ", weight_xs)
@@ -141,7 +144,7 @@ for filename in filenames:
     events = Events(filename)
     for event in events:
         count += 1
-        if count % 10000 == 0:
+        if count % 1000 == 0:
             print (count)
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
@@ -291,10 +294,13 @@ for filename in filenames:
             # print(scale)
             # print(scales[scale])
             for i in range(lheinfo.product().weights().size()):
-                # print(lheinfo.product().weights().at(i).id)
+                # print("weight id: ",lheinfo.product().weights().at(i).id)
                 if int(lheinfo.product().weights().at(i).id) == int(scales[scale]):
                     scale_weight = lheinfo.product().weights().at(i).wgt
-                    # print(scale_weight)
+                    # print("gen weight: ",weight)
+                    # print("lhe weight: ",lhe_weight)
+                    # print("scale weight: ",scale_weight)
+                    # print("scale_weight / lhe_weight: ",scale_weight / lhe_weight)
                     v_boson_pt_hists[scale].Fill(v_boson_pt, weight * weight_xs / 1000.0 * scale_weight / lhe_weight)
                     break
 
