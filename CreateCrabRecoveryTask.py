@@ -33,11 +33,16 @@ with open(original_config_file) as f_in:
 # read some needed options from the original crab config file
 original_input_dataset = None
 request_name = None
+max_memory_mb = None
 for line in original_config_as_list:
     if "inputDataset" in line:
         original_input_dataset = line.split("=")[1].strip().replace('"','')
     if "requestName" in line:
         request_name = line.split("=")[1].strip().replace('"','')
+    if "unitsPerJob" in line:
+        units_per_job = line.split("=")[1].strip().replace('"','')
+    if "maxMemoryMB" in line:
+        max_memory_mb = line.split("=")[1].strip().replace('"','')
 
 # read the outputDataset lumi json ...
 output_json_as_dict = None
@@ -59,6 +64,10 @@ for line in original_config_as_list:
         continue
     if "requestName" in line or "workArea" in line:
         modified_config_as_list.append(line.replace("\n","")+'+"_recovery"'+"\n")
+    elif "unitsPerJob" in line:
+        modified_config_as_list.append(line.replace(units_per_job,"180"))
+    elif "maxMemoryMB" in line:
+        modified_config_as_list.append(line.replace(max_memory_mb,"5000"))
     else:
         modified_config_as_list.append(line)
 # get the lumis processed by the original crab job
