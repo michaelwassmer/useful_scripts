@@ -1,3 +1,5 @@
+# python3 print function
+from __future__ import print_function
 # import ROOT package functionalities
 import ROOT
 # import sys package functionalities
@@ -45,7 +47,9 @@ labelPacked = ("packedGenParticles")
 for counter,event in enumerate(events):
     if counter > 0:
         break
-    print("----------------------------------------------------------------")
+    print(" ")
+    print("========================================= Event {} =========================================".format(counter))
+    print(" ")
     # retrieve packed generator particles and put them into the container defined above
     event.getByLabel (labelPacked, handlePacked)
     # retrieve pruned generator particles and put them into the container defined above
@@ -56,8 +60,10 @@ for counter,event in enumerate(events):
     pruned = handlePruned.product()
 
     # loop over pruned generator particles
-    for p in pruned :
-        print("PdgId : {}   pt : {:.2f}  eta : {:.2f}   phi : {:.2f}   m : {:.2f} e: {:.2f} px: {:.2f} py: {:.2f} pz: {:.2f} status: {}".format(p.pdgId(),p.pt(),p.eta(),p.phi(),p.mass(),p.energy(),p.px(),p.py(),p.pz(),p.status()))
+    print("---------- Most important generator particles (prundGenParticles) ----------")
+    print(" ")
+    for i,p in enumerate(pruned) :
+        print("#{}   PdgId : {}   pt : {:.2f}  eta : {:.2f}   phi : {:.2f}   m : {:.2f} e: {:.2f} px: {:.2f} py: {:.2f} pz: {:.2f} status: {}".format(i,p.pdgId(),p.pt(),p.eta(),p.phi(),p.mass(),p.energy(),p.px(),p.py(),p.pz(),p.status()))
         #mothers = FindAllMothers(p)
         #print("mothers")
         #print(mothers)
