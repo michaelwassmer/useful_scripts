@@ -92,32 +92,32 @@ sample_dict = {
         "W" : {
             "WJetsToLNu_Wpt-0To50_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 115673829,
-                "X"     : 162082.40134,
+                "X"     : 162154.176942,
                 "sigma" : 62470.0
                     },
             "WJetsToLNu_Pt-50To100_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 19671032,
-                "X"     : 8586.44185453,
+                "X"     : 8599.59905057,
                 "sigma" : 3578.0
                     },
             "WJetsToLNu_Pt-100To250_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 510456187,
-                "X"     : ,
+                "X"     : 1723.86706926,
                 "sigma" : 770.8
                     },
             "WJetsToLNu_Pt-250To400_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 108739439,
-                "X"     : 60.3107759862,
+                "X"     : 60.2521789,
                 "sigma" : 28.06
                     },
             "WJetsToLNu_Pt-400To600_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 12004784,
-                "X"     : 7.71216506498,
+                "X"     : 7.71703549582,
                 "sigma" : 3.591
                     },
             "WJetsToLNu_Pt-600ToInf_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
                 "N_gen" : 3898092,
-                "X"     : 1.15846780505,
+                "X"     : 1.15840540096,
                 "sigma" : 0.548
                     },
             

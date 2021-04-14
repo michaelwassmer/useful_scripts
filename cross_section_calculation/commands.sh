@@ -8,3 +8,4 @@ do
   echo ${i%_XS.txt}
   grep "After filter: final cross section" ${i}
 done
+for i in cross_section_calculation/{*LHEZpT*,WJetsToLNu_Pt-*}pythia8_FILES.txt; do python CalculateEvents.py $i 2>&1 | tee ${i%_FILES.txt}_FRACTION.txt;done

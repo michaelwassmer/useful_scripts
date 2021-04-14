@@ -140,6 +140,11 @@ for filename in filenames:
     weight_xs *= 1000.0
     print ("weight_xs = ", weight_xs)
 
+    if era=="2018" and ("DY2Jets" in filename or "WJets" in filename) and ("amcatnlo" in filename):
+        for key in scales:
+            scales[key]=scales[key]-1
+        print(scales)
+
     # loop over events
     events = Events(filename)
     for event in events:
