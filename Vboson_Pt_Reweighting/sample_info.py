@@ -48,7 +48,7 @@ sample_dict = {
         "Zll" : {
             "DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8" : {
                 "N_gen" : 100194597,
-                "X"     : 0.999,
+                "X"     : 0.99912894812,
                 "sigma" : 5.323e+03
                     },
             "DYJetsToLL_M-50_HT-70to100_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8" : {
