@@ -96,7 +96,7 @@ for filename in filenames:
     # information to calculate cross section weight
     subdict = sample_dict.get(era, None).get(boson, None)
     for key in subdict:
-        if key in filename.lower():
+        if key in filename:
             subsubdict = subdict.get(key, None)
             print ("sigma: ", subsubdict.get("sigma", None))
             print ("X: ", subsubdict.get("X", None))
