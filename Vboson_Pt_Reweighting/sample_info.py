@@ -46,6 +46,11 @@ sample_dict = {
                     }
             },
         "Zll" : {
+            "DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8" : {
+                "N_gen" : 100194597,
+                "X"     : 0.999,
+                "sigma" : 5.323e+03
+                    },
             "DYJetsToLL_M-50_HT-70to100_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8" : {
                 "N_gen" : 10019684,
                 "X"     : 0.999078975043,
@@ -88,6 +93,11 @@ sample_dict = {
                     }
             },
         "W" : {
+            "WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8" : {
+                "N_gen" : 71026861,
+                "X"     : 0.999112447464,
+                "sigma" : 5.276e+04
+                    },
             "WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8" : {
                 "N_gen" : 28084244,
                 "X"     : 0.998964928963,
