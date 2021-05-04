@@ -98,6 +98,11 @@ sample_dict = {
                 "X"     : 0.999112447464,
                 "sigma" : 5.276e+04
                     },
+            "/WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
+                "N_gen" : 29235243,
+                "X"     : 172041.73207,
+                "sigma" : 6.689e+04
+            },
             "WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8" : {
                 "N_gen" : 28084244,
                 "X"     : 0.998964928963,
