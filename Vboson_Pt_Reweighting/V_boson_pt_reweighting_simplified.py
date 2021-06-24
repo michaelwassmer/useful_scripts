@@ -6,6 +6,7 @@ from array import array
 from DataFormats.FWLite import Events, Handle
 from math import *
 from sample_info import sample_dict
+from VariableCalculator import VariableCalculator
 
 # inputs
 era = str(sys.argv[1])
@@ -18,10 +19,12 @@ handlePruned = Handle("std::vector<reco::GenParticle>")
 handlePacked = Handle("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle("GenEventInfoProduct")
 lheinfo = Handle("LHEEventProduct")
+handleJets = Handle("std::vector<reco::GenJet>")
 labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
 labelLHE = "externalLHEProducer"
+labelJets = "slimmedGenJets"
 
 # binning according to https://arxiv.org/pdf/1705.04664.pdf
 binning = [
@@ -70,10 +73,54 @@ binning = [
     6500,
 ]
 
-# nominal histogram
-v_boson_pt_hist = ROOT.TH1D(boson + "_boson_pt", boson + "_boson_pt", len(binning) - 1, array("d", binning))
-v_boson_pt_hist.Sumw2()
+# file to store the histograms
 file_ = ROOT.TFile(boson + "_boson_pt_" + era + "_" + postfix + ".root", "RECREATE")
+
+# dictionary containing necessary information to automate creation and filling of histograms
+var_info_dict = {      
+                       ### 1D ###
+                       boson + "_boson_pt" : {"dim" : 1, "hist" : ROOT.TH1D(boson + "_boson_pt", boson + "_boson_pt", 20, 0, 1000) , "function" : "boson_pt"},
+                       boson + "_boson_eta" : {"dim" : 1, "hist" : ROOT.TH1D(boson + "_boson_eta", boson + "_boson_eta", 25, -5, 5) , "function" : "boson_eta"},
+                       ### 2D ###
+                       boson + "_boson_pt_boson_eta" : {"dim" : 2, "hist" : ROOT.TH2D(boson + "_boson_pt_boson_eta", boson + "_boson_pt_boson_eta", 20, 0, 1000, 25, -5, 5) , "function1" : "boson_pt" , "function2" : "boson_eta"}
+                   }
+
+# dummy histograms for testing purposes, will be removed later
+dummy_1D_hist=ROOT.TH1D("bla","bla",1,0,1000)
+dummy_1D_hist.SetBinContent(1,2.)
+dummy_2D_hist=ROOT.TH2D("blabla","blabla",1,0,1000,1,-5,5)
+dummy_2D_hist.SetBinContent(1,1,3.)
+dummy_2D_hist.SetBinContent(0,1,3.)
+dummy_2D_hist.SetBinContent(1,0,3.)
+dummy_2D_hist.SetBinContent(0,0,3.)
+dummy_2D_hist.SetBinContent(1,2,3.)
+dummy_2D_hist.SetBinContent(0,2,3.)
+dummy_2D_hist.SetBinContent(2,0,3.)
+dummy_2D_hist.SetBinContent(2,1,3.)
+dummy_2D_hist.SetBinContent(2,2,3.)
+
+# dictionary containing information regarding corrections factors
+corr_factor_dict = {
+                       "" : {},
+                       ### 1D ###
+                       "Vpt_corr_factor_incl" : {"dim" : 1, "hist" : dummy_1D_hist, "function" : "boson_pt"},
+                       ### 2D ###
+                       "Vpt_Veta_corr_factor_incl" : {"dim" : 2, "hist" : dummy_2D_hist, "function1" : "boson_pt" , "function2" : "boson_eta"}
+                   }
+
+sel_func_dict = {"incl" : "incl_sel" , "ana" : "ana_sel"}
+
+# dictionary to store resulting histograms
+histo_dict = {}
+
+# create histograms for all combinations of desired histograms and correction factors
+for key in var_info_dict:
+    for key_ in corr_factor_dict:
+        for key__ in sel_func_dict:
+            histo_dict[key__+"_"+key+"_"+key_]=var_info_dict[key]["hist"].Clone()
+            histo_dict[key__+"_"+key+"_"+key_].SetName(key__+"_"+key+"_"+key_)
+            histo_dict[key__+"_"+key+"_"+key_].SetTitle(key__+"_"+key+"_"+key_)
+            histo_dict[key__+"_"+key+"_"+key_].Sumw2()
 
 count = 0
 
@@ -114,10 +161,12 @@ for filename in filenames:
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
         event.getByLabel(labelLHE, lheinfo)
+        event.getByLabel(labelJets, handleJets)
         # get the products (prunedGenParticles collection, GenEventInfoProduct and LHEEventProduct)
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         lhe_weight = lheinfo.product().originalXWGTUP()
+        jets = handleJets.product()
         # list for decay products of W or Z boson
         decay_prods = []
         # list for photons either for photon+jets events or for radiated photons to add back to charged leptons
@@ -248,12 +297,52 @@ for filename in filenames:
         else:
             print ("only W or Z boson or Photon allowed")
             exit()
-        v_boson_pt = v_boson.pt()
-        # print (v_boson_pt)
-        # fill the vector boson pt
-        v_boson_pt_hist.Fill(v_boson_pt, weight * weight_xs / 1000.0)
 
-# write all to a file
-file_.WriteTObject(v_boson_pt_hist)
+        # variablecalculator class instance to calculate necessary variables in an automated way
+        vc = VariableCalculator(v_boson,jets,decay_prods)
+        #print("boson_pt ",vc.boson_pt())
+        #print("boson_eta ",vc.boson_eta())
+        #print("jet0_pt ",vc.jet0_pt())
+        #print("jet0_eta ",vc.jet0_eta())
+        #print("njets ",vc.njets())
+        #print("ht ",vc.ht_jets())
+        #print("dphi_boson_jet0 ",vc.deltaphi_boson_jet0())
+        #print("lepton_pt  ",vc.charged_lepton_pt())
+        #print("lepton_eta  ",vc.charged_lepton_eta())
+        #print("mT ",vc.transverse_mass())
+        
+        # loop over keys describing desired variables
+        for key in var_info_dict:
+            # loop over keys describing desired correction factors
+            for key_ in corr_factor_dict:
+                # regular weight
+                final_weight = weight * weight_xs / 1000.0
+                # apply correction factors depending on its dimension
+                # empty string -> no correction factor
+                if key_=="":
+                    final_weight*=1
+                elif corr_factor_dict[key_]["dim"]==1:
+                    final_weight*=corr_factor_dict[key_]["hist"].GetBinContent(corr_factor_dict[key_]["hist"].FindBin(getattr(vc,corr_factor_dict[key_]["function"])()))
+                elif corr_factor_dict[key_]["dim"]==2:
+                    final_weight*=corr_factor_dict[key_]["hist"].GetBinContent(corr_factor_dict[key_]["hist"].FindBin(getattr(vc,corr_factor_dict[key_]["function1"])(),getattr(vc,corr_factor_dict[key_]["function2"])()))
+                else:
+                    print("correction factor calculation problem")
+                    exit()
+                for key__ in sel_func_dict:
+                    if not getattr(vc,sel_func_dict[key__])():
+                        continue
+                    # fill histograms depending on dimension of histograms
+                    if var_info_dict[key]["dim"]==1:
+                        histo_dict[key__+"_"+key+"_"+key_].Fill(getattr(vc,var_info_dict[key]["function"])(), final_weight)
+                    elif var_info_dict[key]["dim"]==2:
+                        histo_dict[key__+"_"+key+"_"+key_].Fill(getattr(vc,var_info_dict[key]["function1"])(), getattr(vc,var_info_dict[key]["function2"])(), final_weight)
+                    else:
+                        print("only 1 and 2 dimensions supported at the moment")
+                        exit()
+
+# write all histograms to a file
+for key in histo_dict:
+    file_.WriteTObject(histo_dict[key])
+
 file_.Close()
 print ("finished")

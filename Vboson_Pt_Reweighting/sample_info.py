@@ -51,6 +51,11 @@ sample_dict = {
                 "X"     : 0.99912894812,
                 "sigma" : 5.323e+03
                     },
+            "DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8" : {
+                "N_gen" : 193215674,
+                "X"     : 17809.8392956,
+                "sigma" : 6.533e+03
+                    },
             "DYJetsToLL_M-50_HT-70to100_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8" : {
                 "N_gen" : 10019684,
                 "X"     : 0.999078975043,
