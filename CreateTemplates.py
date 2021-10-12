@@ -39,7 +39,7 @@ parser.add_option(
     "--variables_1D",
     dest="variables_1D",
     type="string",
-    default="N_Jets",
+    default="",
     help="ROOT string for desired variables as comma separated list, e.g. var1,var2,var3,..."
 )
 parser.add_option(
@@ -64,29 +64,66 @@ ROOT.ROOT.EnableImplicitMT(options.nthreads)
 
 data_frame = None
 branches = [
-"pt_pfmet_raw"
-"pt_pfmet_raw_jes_up"
-"pt_pfmet_raw_jes_down"
-"pt_pfmet_raw_jer_up"
-"pt_pfmet_raw_jer_down"
-"pt_pfmet_raw_jersmear_up"
-"pt_pfmet_raw_jersmear_down"
-"pt_pfmet_t1"
-"pt_pfmet_t1_jes_up"
-"pt_pfmet_t1_jes_down"
-"pt_pfmet_t1_jer_up"
-"pt_pfmet_t1_jer_down"
-"pt_pfmet_t1_jersmear_up"
-"pt_pfmet_t1_jersmear_down"
-"pt_pfmet_t1smear"
-"pt_pfmet_t1smear_jes_up"
-"pt_pfmet_t1smear_jes_down"
-"pt_pfmet_t1smear_jer_up"
-"pt_pfmet_t1smear_jer_down"
-"pt_pfmet_t1smear_jersmear_up"
-"pt_pfmet_t1smear_jersmear_down"
-"pt_genmet"
+"sample_weight",
+"generator_weight",
+"pt_pfmet_raw",
+"pt_pfmet_raw_jes_up",
+"pt_pfmet_raw_jes_down",
+"pt_pfmet_raw_jer_up",
+"pt_pfmet_raw_jer_down",
+"pt_pfmet_raw_jersmear_up",
+"pt_pfmet_raw_jersmear_down",
+"pt_pfmet_raw_uncen_up",
+"pt_pfmet_raw_uncen_down",
+"pt_pfmet_t1",
+"pt_pfmet_t1_jes_up",
+"pt_pfmet_t1_jes_down",
+"pt_pfmet_t1_jer_up",
+"pt_pfmet_t1_jer_down",
+"pt_pfmet_t1_jersmear_up",
+"pt_pfmet_t1_jersmear_down",
+"pt_pfmet_t1_uncen_up",
+"pt_pfmet_t1_uncen_down",
+"pt_pfmet_t1smear",
+"pt_pfmet_t1smear_jes_up",
+"pt_pfmet_t1smear_jes_down",
+"pt_pfmet_t1smear_jer_up",
+"pt_pfmet_t1smear_jer_down",
+"pt_pfmet_t1smear_jersmear_up",
+"pt_pfmet_t1smear_jersmear_down",
+"pt_pfmet_t1smear_uncen_up",
+"pt_pfmet_t1smear_uncen_down",
+"pt_genmet",
+
+"Weight_GEN_nom",
+"pt_pfmet_t1_nom",
+"pt_pfmet_t1_jesTotalUp",
+"pt_pfmet_t1_jesTotalDown",
+"pt_pfmet_t1_jerUp",
+"pt_pfmet_t1_jerDown",
+"pt_pfmet_t1smear_nom",
+"pt_pfmet_t1smear_jesTotalUp",
+"pt_pfmet_t1smear_jesTotalDown",
+"pt_pfmet_t1smear_jerUp",
+"pt_pfmet_t1smear_jerDown",
+"pt_pfmet_raw_nom",
+"pt_genmet_nom"
 ]
+
+constructed_vars = {
+"pt_pfmet_t1smear_div_pt_pfmet_t1" : "pt_pfmet_t1smear/pt_pfmet_t1",
+"pt_pfmet_t1_jes_up_div_pt_pfmet_t1" : "pt_pfmet_t1_jes_up/pt_pfmet_t1",
+"pt_pfmet_t1_jes_down_div_pt_pfmet_t1" : "pt_pfmet_t1_jes_down/pt_pfmet_t1",
+"pt_pfmet_t1_jer_up_div_pt_pfmet_t1" : "pt_pfmet_t1_jer_up/pt_pfmet_t1",
+"pt_pfmet_t1_jer_down_div_pt_pfmet_t1" : "pt_pfmet_t1_jer_down/pt_pfmet_t1",
+"pt_pfmet_t1_uncen_up_div_pt_pfmet_t1" : "pt_pfmet_t1_uncen_up/pt_pfmet_t1",
+"pt_pfmet_t1_uncen_down_div_pt_pfmet_t1" : "pt_pfmet_t1_uncen_down/pt_pfmet_t1",
+"pt_pfmet_t1_div_pt_pfmet_raw" : "pt_pfmet_t1/pt_pfmet_raw",
+"pt_pfmet_t1smear_div_pt_pfmet_raw" : "pt_pfmet_t1smear/pt_pfmet_raw",
+"pt_pfmet_raw_div_pt_genmet" : "pt_pfmet_raw/pt_genmet",
+"pt_pfmet_t1_div_pt_genmet" : "pt_pfmet_t1/pt_genmet",
+"pt_pfmet_t1smear_div_pt_genmet" : "pt_pfmet_t1smear/pt_genmet"
+}
 
 branch_vec = ROOT.vector("string")()
 [branch_vec.push_back(branch) for branch in branches]
@@ -117,13 +154,21 @@ selection = options.selection
 
 vars_1D = options.variables_1D.split(",")
 vars_2D = options.variables_2D.split(",")
+print(vars_1D)
+print(vars_2D)
+if vars_1D == [""]:
+    vars_1D = []
+if vars_2D == [""]:
+    vars_2D = []
 
 binning_x = [(0+10*i) for i in range(21)]
 
 histos_1D={}
 histos_2D={}
 
-reference_events = data_frame.Filter(selection)
+reference_events = data_frame.Filter(selection).Define("weight","sample_weight*generator_weight")
+for constructed_var in constructed_vars:
+    reference_events=reference_events.Define(constructed_var,constructed_vars[constructed_var])
 for var_1D in vars_1D:
     var,nbinsx,x_low,x_high = None,None,None,None
     Histo1D_argument = None
@@ -137,9 +182,7 @@ for var_1D in vars_1D:
     print(Histo1D_argument)
     histos_1D[var]=reference_events.Histo1D(
                                           Histo1D_argument,
-                                          #("{}".format(var), "title;{};arbitrary units".format(var), int(nbinsx), float(x_low), float(x_high)),
-                                          #("{}".format(var_1D), "title;{};arbitrary units".format(var_1D), len(binning_x)-1, array('d',binning_x)),
-                                          var
+                                          var,"weight"
                                           )
 
 print(histos_1D)
