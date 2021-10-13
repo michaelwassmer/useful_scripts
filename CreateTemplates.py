@@ -8,6 +8,14 @@ parser.add_option(
     "-n", "--name", dest="name", type="string", default="", help="name to recognize output"
 )
 parser.add_option(
+    "-t",
+    "--treename",
+    dest="treename",
+    type="string",
+    default="",
+    help="name of the ROOT tree in the ROOT files you want to process"
+)
+parser.add_option(
     "-f",
     "--dataframe",
     dest="is_dataframe",
@@ -24,7 +32,7 @@ parser.add_option(
     help="set this flag if you want to save the generated dataframe to disk",
 )
 parser.add_option(
-    "-j", "--nthreads", dest="nthreads", type="int", default=4, help="number of threads to use"
+    "-j", "--nthreads", dest="nthreads", type="int", default=4, help="number of threads to use, default is 4"
 )
 parser.add_option(
      "-S",
@@ -40,7 +48,7 @@ parser.add_option(
     dest="variables_1D",
     type="string",
     default="",
-    help="ROOT string for desired variables as comma separated list, e.g. var1,var2,var3,..."
+    help="string containing the variables you want to create 1D templates of as comma separated list, e.g. var1,var2,var3,..."
 )
 parser.add_option(
     "-2",
@@ -48,90 +56,101 @@ parser.add_option(
     dest="variables_2D",
     type="string",
     default="",
-    help="ROOT string for desired variables as comma separated list, e.g. varx1:vary1,varx2:vary2,..."
+    help="string containing the variables you want to create 2D templates of as comma separated list, e.g. varx1:vary1,varx2:vary2,..."
 )
-(options, args) = parser.parse_args()
-print(options.variables_1D)
-print(options.variables_2D)
+parser.add_option(
+    "-a",
+    "--add_variables",
+    dest="add_variables",
+    type="string",
+    default="",
+    help="string for needed additional variables (e.g. weights or variables to construct other variables from) as comma separated list, e.g. vara,varb,varc,..."
+)
+parser.add_option(
+    "-c",
+    "--constr_variables",
+    dest="constr_variables",
+    type="string",
+    default="",
+    help="ROOT string for needed constructed variables as comma separated list, e.g. varxy=varx+vary,varuvw=varu-varx-varw,..."
+)
+parser.add_option(
+    "-w",
+    "--weight",
+    dest="weight",
+    type="string",
+    default="1",
+    help="ROOT string of the weight which should be applied to all events, e.g. generator_weight*sample_weight. The single weights making up the total weight need to be given in the add_variables option for them to be available."
+)
 
+(options, args) = parser.parse_args()
+
+# create a list of desired template variables from input arguments
+vars_1D = options.variables_1D.split(",")
+vars_2D = options.variables_2D.split(",")
+add_vars = options.add_variables.split(",")
+constr_vars = options.constr_variables.split(",")
+print("1D variables: ",vars_1D)
+print("2D variables: ",vars_2D)
+print("additional variables: ",add_vars)
+print("constructed variables: ",constr_vars)
+
+# account for the case that nothing is given as input arguments
+if vars_1D == [""]:
+    vars_1D = []
+if vars_2D == [""]:
+    vars_2D = []
+if add_vars == [""]:
+    add_vars = []
+if constr_vars == [""]:
+    constr_vars = []
+
+# determine the needed branches from the desired template variables and the additional variables
+branches = []
+for var_1D in vars_1D:
+    var = None
+    if ";" in var_1D:
+        var = var_1D.split(";")[0]
+    else:
+        var = var_1D
+    branches.append(var)
+for add_var in add_vars:
+    branches.append(add_var)
+
+print("needed branches: ",branches)
+
+# import needed ROOT stuff and set some options
 import ROOT
 ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch(True)
 from ROOT import RDataFrame as RDF
 
 # ROOT.PyConfig.IgnoreCommandLineOptions = True
+# set the number of threads the RDataFrame is supposed to use
 ROOT.ROOT.EnableImplicitMT(options.nthreads)
 
-data_frame = None
-branches = [
-"sample_weight",
-"generator_weight",
-"pt_pfmet_raw",
-"pt_pfmet_raw_jes_up",
-"pt_pfmet_raw_jes_down",
-"pt_pfmet_raw_jer_up",
-"pt_pfmet_raw_jer_down",
-"pt_pfmet_raw_jersmear_up",
-"pt_pfmet_raw_jersmear_down",
-"pt_pfmet_raw_uncen_up",
-"pt_pfmet_raw_uncen_down",
-"pt_pfmet_t1",
-"pt_pfmet_t1_jes_up",
-"pt_pfmet_t1_jes_down",
-"pt_pfmet_t1_jer_up",
-"pt_pfmet_t1_jer_down",
-"pt_pfmet_t1_jersmear_up",
-"pt_pfmet_t1_jersmear_down",
-"pt_pfmet_t1_uncen_up",
-"pt_pfmet_t1_uncen_down",
-"pt_pfmet_t1smear",
-"pt_pfmet_t1smear_jes_up",
-"pt_pfmet_t1smear_jes_down",
-"pt_pfmet_t1smear_jer_up",
-"pt_pfmet_t1smear_jer_down",
-"pt_pfmet_t1smear_jersmear_up",
-"pt_pfmet_t1smear_jersmear_down",
-"pt_pfmet_t1smear_uncen_up",
-"pt_pfmet_t1smear_uncen_down",
-"pt_genmet",
+# dictionary of variables you explicitly construct from the branches above
+constructed_vars = {}
+for constr_var in constr_vars:
+    var = None
+    formula = None
+    var,formula = constr_var.split("=")
+    constructed_vars[var] = formula
 
-"Weight_GEN_nom",
-"pt_pfmet_t1_nom",
-"pt_pfmet_t1_jesTotalUp",
-"pt_pfmet_t1_jesTotalDown",
-"pt_pfmet_t1_jerUp",
-"pt_pfmet_t1_jerDown",
-"pt_pfmet_t1smear_nom",
-"pt_pfmet_t1smear_jesTotalUp",
-"pt_pfmet_t1smear_jesTotalDown",
-"pt_pfmet_t1smear_jerUp",
-"pt_pfmet_t1smear_jerDown",
-"pt_pfmet_raw_nom",
-"pt_genmet_nom"
-]
-
-constructed_vars = {
-"pt_pfmet_t1smear_div_pt_pfmet_t1" : "pt_pfmet_t1smear/pt_pfmet_t1",
-"pt_pfmet_t1_jes_up_div_pt_pfmet_t1" : "pt_pfmet_t1_jes_up/pt_pfmet_t1",
-"pt_pfmet_t1_jes_down_div_pt_pfmet_t1" : "pt_pfmet_t1_jes_down/pt_pfmet_t1",
-"pt_pfmet_t1_jer_up_div_pt_pfmet_t1" : "pt_pfmet_t1_jer_up/pt_pfmet_t1",
-"pt_pfmet_t1_jer_down_div_pt_pfmet_t1" : "pt_pfmet_t1_jer_down/pt_pfmet_t1",
-"pt_pfmet_t1_uncen_up_div_pt_pfmet_t1" : "pt_pfmet_t1_uncen_up/pt_pfmet_t1",
-"pt_pfmet_t1_uncen_down_div_pt_pfmet_t1" : "pt_pfmet_t1_uncen_down/pt_pfmet_t1",
-"pt_pfmet_t1_div_pt_pfmet_raw" : "pt_pfmet_t1/pt_pfmet_raw",
-"pt_pfmet_t1smear_div_pt_pfmet_raw" : "pt_pfmet_t1smear/pt_pfmet_raw",
-"pt_pfmet_raw_div_pt_genmet" : "pt_pfmet_raw/pt_genmet",
-"pt_pfmet_t1_div_pt_genmet" : "pt_pfmet_t1/pt_genmet",
-"pt_pfmet_t1smear_div_pt_genmet" : "pt_pfmet_t1smear/pt_genmet"
-}
-
+# add branches to a corresponding ROOT vector to later pass to initialization of RDataFrame
 branch_vec = ROOT.vector("string")()
-[branch_vec.push_back(branch) for branch in branches]
+for branch in branches:
+    branch_vec.push_back(branch)
 
+# initialize RDataFrame
+data_frame = None
+
+# either create the RDataFrame from a ROOT tree in a file or from a ROOT chain made up of several files
+# or create it directly from an existing RDataFrame including a ROOT tree
 if not options.is_dataframe:
     print ("No dataframe was given. Handling the arguments as trees and adding them to chain.")
     input_files = args
-    input_chain = ROOT.TChain("METAnalyzer/MET_tree")
+    input_chain = ROOT.TChain(options.treename)
     for input_file in input_files:
         input_chain.Add(input_file)
     print ("Finished loading chain with ", input_chain.GetEntries(), " entries")
@@ -139,66 +158,90 @@ if not options.is_dataframe:
 else:
     print ("Dataframe flag was set. Handling argument as dataframe.")
     input_file = args[0]
-    data_frame = RDF("tree", input_file)
+    data_frame = RDF(options.treename, input_file)
 
-print ("Finished converting the chain to RDataFrame")
+print ("Finished creating the RDataFrame")
 
+# possibly save the created RDataFrame to disk
 if not options.is_dataframe and options.save:
     print ("saving dataframe to disk as ", data_mc_string + "_" + names + "_dataframe.root")
     data_frame.Snapshot("tree", data_mc_string + "_" + names + "_dataframe.root", branch_vec)
     print ("saved dataframe to disk ...")
 
+# a label for the ouput files
 name = options.name
 
+# a ROOT style selection string
 selection = options.selection
 
-vars_1D = options.variables_1D.split(",")
-vars_2D = options.variables_2D.split(",")
-print(vars_1D)
-print(vars_2D)
-if vars_1D == [""]:
-    vars_1D = []
-if vars_2D == [""]:
-    vars_2D = []
-
-binning_x = [(0+10*i) for i in range(21)]
-
+# dictionaries to contain the requested 1D and 2D templates
 histos_1D={}
 histos_2D={}
 
-reference_events = data_frame.Filter(selection).Define("weight","sample_weight*generator_weight")
+# apply the selection from above to the RDataFrame and define a weight on the remaining events
+# the weight can also be a branch or constructed from several branches, e.g. generator_weight*sample_weight
+reference_events = data_frame.Filter(selection).Define("weight",options.weight)
+
+# define constructed variables on RDataFrame after selection
 for constructed_var in constructed_vars:
     reference_events=reference_events.Define(constructed_var,constructed_vars[constructed_var])
+
+# loop over 1D variables given as input arguments
 for var_1D in vars_1D:
     var,nbinsx,x_low,x_high = None,None,None,None
     Histo1D_argument = None
+    # if a binning and range is given use that binning and range, if not use 50 bins and let ROOT decide the range
     if ";" in var_1D:
         var,nbinsx,x_low,x_high = var_1D.split(";")
         Histo1D_argument = ("{}".format(var), "title;{};arbitrary units".format(var), int(nbinsx), float(x_low), float(x_high))
     else:
         var = var_1D
         Histo1D_argument = ("{}".format(var), "title;{};arbitrary units".format(var), 50, 1, 1)
-    print(var_1D)
-    print(Histo1D_argument)
+    #print(var_1D)
+    #print(Histo1D_argument)
+    # define the desired histograms on the RDataFrame after selection and assign the previously defined weight to the events
     histos_1D[var]=reference_events.Histo1D(
                                           Histo1D_argument,
                                           var,"weight"
                                           )
 
-print(histos_1D)
+#print(histos_1D)
 
+# TODO: 2D variables do not work yet so do not use that option yet
 for var_2D in vars_2D:
     vars = var_2D.split(":")
-    histos_2D[var_2D]=reference_events.Histo2D(
-                                          ("{}".format(var_2D), "title;{};{};arbitrary units".format(vars[0],vars[1]), len(binning_x)-1, array('d',binning_x), len(binning_x)-1, array('d',binning_x)),
-                                          vars[0],vars[1]
+    var_1D_x = vars[0]
+    var_1D_y = vars[1]
+    varx = None
+    vary = None
+    Histo2D_argument_x = None
+    Histo2D_argument_y = None
+    if ";" in var_1D_x:
+        varx,nbinsx,x_low,x_high = var_1D_x.split(";")
+        Histo2D_argument_x = (int(nbinsx), float(x_low), float(x_high))
+    else:
+        varx = var_1D_x
+        Histo2D_argument_x = (50, 1, 1)
+    if ";" in var_1D_y:
+        vary,nbinsy,y_low,y_high = var_1D_y.split(";")
+        Histo2D_argument_y = (int(nbinsy), float(y_low), float(y_high))
+    else:
+        vary = var_1D_y
+        Histo2D_argument_y = (50, 1, 1)
+    Histo2D_argument = ("{}_{}".format(varx,vary), "title;{};{};arbitrary units".format(varx,vary)) + Histo2D_argument_x + Histo2D_argument_y
+    histos_2D["{}_{}".format(varx,vary)]=reference_events.Histo2D(
+                                          Histo2D_argument,
+                                          varx,vary,"weight"
                                           )
 
-print(histos_2D)
+#print(histos_2D)
 
+# create a ROOT file and write all the created histograms into the file
 output_file = ROOT.TFile(name + ".root", "RECREATE")
 for histo_1D in histos_1D:
     output_file.WriteTObject(histos_1D[histo_1D].GetPtr())
 for histo_2D in histos_2D:
     output_file.WriteTObject(histos_2D[histo_2D].GetPtr())
 output_file.Close()
+
+print("Finished writing templates")
