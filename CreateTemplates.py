@@ -207,7 +207,7 @@ for var_1D in vars_1D:
 
 #print(histos_1D)
 
-# TODO: 2D variables do not work yet so do not use that option yet
+# loop over 2D variables given as input arguments
 for var_2D in vars_2D:
     vars = var_2D.split(":")
     var_1D_x = vars[0]
