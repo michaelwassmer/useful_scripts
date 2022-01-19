@@ -113,9 +113,29 @@ for var_1D in vars_1D:
         var = var_1D.split(";")[0]
     else:
         var = var_1D
-    branches.append(var)
+    if not var in branches:
+        branches.append(var)
+for var_2D in vars_2D:
+    vars = var_2D.split(":")
+    var_1D_x = vars[0]
+    var_1D_y = vars[1]
+    varx = None
+    vary = None
+    if ";" in var_1D_x:
+        varx = var_1D_x.split(";")[0]
+    else:
+        varx = var_1D_x
+    if ";" in var_1D_y:
+        vary = var_1D_y.split(";")[0]
+    else:
+        vary = var_1D_y
+    if not varx in branches:
+        branches.append(varx)
+    if not vary in branches:
+        branches.append(vary)
 for add_var in add_vars:
-    branches.append(add_var)
+    if not add_var in branches:
+        branches.append(add_var)
 
 print("needed branches: ",branches)
 
