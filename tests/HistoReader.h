@@ -21,6 +21,10 @@ class HistoReader
     std::string debug_string_;
 };
 
+HistoReader::~HistoReader()
+{
+}
+
 HistoReader::HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name,
                          bool use_bin_error, uint nthreads)
     : instance_label_{instance_label}, path_to_file_{path_to_file}, histogram_name_{histogram_name},
