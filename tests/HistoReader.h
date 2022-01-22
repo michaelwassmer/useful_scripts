@@ -1,11 +1,11 @@
 #include <fmt/format.h>
-class HistoReader
+template <class T> class HistoReader
 {
   public:
     HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name, bool use_bin_error,
                 uint nthreads);
     ~HistoReader();
-    float operator()(uint thread, float x);
+    float operator()(uint thread, T input);
     void UseEdgeBins(bool use_edge_bins);
 
   private:
@@ -21,12 +21,13 @@ class HistoReader
     std::string debug_string_;
 };
 
-HistoReader::~HistoReader()
+template <class T> HistoReader<T>::~HistoReader()
 {
 }
 
-HistoReader::HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name,
-                         bool use_bin_error, uint nthreads)
+template <class T>
+HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name,
+                            bool use_bin_error, uint nthreads)
     : instance_label_{instance_label}, path_to_file_{path_to_file}, histogram_name_{histogram_name},
       use_bin_error_{use_bin_error}, nthreads_{nthreads}
 {
@@ -78,12 +79,12 @@ HistoReader::HistoReader(std::string instance_label, std::string path_to_file, s
     }
 }
 
-void HistoReader::UseEdgeBins(bool use_edge_bins)
+template <class T> void HistoReader<T>::UseEdgeBins(bool use_edge_bins)
 {
     use_edge_bins_ = use_edge_bins;
 }
 
-float HistoReader::operator()(uint thread, float x)
+template <class T> float HistoReader<T>::operator()(uint thread, T input)
 {
     if (!initialized_)
     {
@@ -113,11 +114,11 @@ float HistoReader::operator()(uint thread, float x)
     TH1D *histo = histos_.at(thread);
     // std::cout << "xmin " << histo->GetXaxis()->GetXmin() << std::endl;
     // std::cout << "xmax " << histo->GetXaxis()->GetXmax() << std::endl;
-
+    float x = input;
     if (use_edge_bins_)
     {
-        x = std::max(float(x), float(histo->GetXaxis()->GetXmin() + 0.001));
-        x = std::min(float(x), float(histo->GetXaxis()->GetXmax() - 0.001));
+        x = std::max(x, float(histo->GetXaxis()->GetXmin() + 0.001));
+        x = std::min(x, float(histo->GetXaxis()->GetXmax() - 0.001));
     }
 
     bool x_in_range = (x > histo->GetXaxis()->GetXmin()) && (x < histo->GetXaxis()->GetXmax());
