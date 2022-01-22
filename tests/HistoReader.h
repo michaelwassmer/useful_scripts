@@ -12,6 +12,7 @@ template <class T> class HistoReader
     void UseEdgeBins(bool use_edge_bins);
 
   private:
+    void PrintHistoInfo(TH1D *histo);
     std::string instance_label_;
     std::string path_to_file_;
     std::string histogram_name_;
@@ -37,6 +38,7 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
     TFile *file = nullptr;
     TH1D *histo = nullptr;
     debug_string_ = fmt::format("HistoReader instance {}: ", instance_label_);
+    std::cout << debug_string_ << "Starting initialization ..." << std::endl;
     if (path_to_file != "")
     {
         file = TFile::Open(path_to_file_.c_str(), "READ");
@@ -55,6 +57,8 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
             std::cout << debug_string_
                       << fmt::format("Loaded histogram {} from file {}.", histogram_name_, path_to_file_) << std::endl;
             histo->SetDirectory(0);
+            std::cout << debug_string_ << "Giving some histogram information in the following." << std::endl;
+            PrintHistoInfo(histo);
             std::cout << debug_string_
                       << fmt::format("Creating {} clones of histogram for implicit multithreading.", nthreads_)
                       << std::endl;
@@ -68,7 +72,6 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
                                          fmt::ptr(histos_.back()))
                           << std::endl;
             }
-            initialized_ = true;
         }
         else
         {
@@ -83,6 +86,17 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
         std::cout << debug_string_ << fmt::format("File {} not valid!", path_to_file_) << std::endl;
         throw std::exception();
     }
+    initialized_ = true;
+    std::cout << debug_string_ << "Finished initialization." << std::endl;
+}
+
+template <class T> void HistoReader<T>::PrintHistoInfo(TH1D *histo)
+{
+    std::cout << fmt::format("\t\t\t\t name: {}, title: {}", histo->GetName(), histo->GetTitle()) << std::endl;
+    std::cout << fmt::format("\t\t\t\t # bins: {}, xmin: {}, xmax: {}", histo->GetNbinsX(),
+                             histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax())
+              << std::endl;
+    std::cout << fmt::format("\t\t\t\t entries: {}", histo->GetEntries()) << std::endl;
 }
 
 template <class T> void HistoReader<T>::UseEdgeBins(bool use_edge_bins)
