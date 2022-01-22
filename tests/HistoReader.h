@@ -1,4 +1,7 @@
+#include <iostream>
 #include <fmt/format.h>
+#include <TFile.h>
+#include <TH1D.h>
 template <class T> class HistoReader
 {
   public:
@@ -52,6 +55,9 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
             std::cout << debug_string_
                       << fmt::format("Loaded histogram {} from file {}.", histogram_name_, path_to_file_) << std::endl;
             histo->SetDirectory(0);
+            std::cout << debug_string_
+                      << fmt::format("Creating {} clones of histogram for implicit multithreading.", nthreads_)
+                      << std::endl;
             for (uint i = 0; i < nthreads_; i++)
             {
                 TH1D *clone = (TH1D *)histo->Clone();
