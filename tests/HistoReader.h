@@ -1,3 +1,4 @@
+#include <fmt/format.h>
 class HistoReader
 {
   public:
@@ -17,6 +18,7 @@ class HistoReader
     std::vector<TH1D *> histos_;
     bool initialized_ = false;
     bool use_edge_bins_ = true;
+    std::string debug_string_;
 };
 
 HistoReader::HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name,
@@ -26,43 +28,48 @@ HistoReader::HistoReader(std::string instance_label, std::string path_to_file, s
 {
     TFile *file = nullptr;
     TH1D *histo = nullptr;
+    debug_string_ = fmt::format("HistoReader instance {}: ", instance_label_);
     if (path_to_file != "")
     {
         file = TFile::Open(path_to_file_.c_str(), "READ");
     }
     else
     {
-        std::cout << "HistoReader " << instance_label_ << ": no file given" << std::endl;
+        std::cout << debug_string_ << fmt::format("File to read was not given!") << std::endl;
         throw std::exception();
     }
     if (file)
     {
-        std::cout << "HistoReader " << instance_label_ << ": opened file " << path_to_file_ << std::endl;
+        std::cout << debug_string_ << fmt::format("Opened file {} succesfully.", path_to_file_) << std::endl;
         histo = (TH1D *)file->Get(histogram_name_.c_str());
         if (histo)
         {
-            std::cout << "loaded histogram " << histogram_name_ << " from file " << path_to_file_ << std::endl;
+            std::cout << debug_string_
+                      << fmt::format("Loaded histogram {} from file {}.", histogram_name_, path_to_file_) << std::endl;
             histo->SetDirectory(0);
             for (uint i = 0; i < nthreads_; i++)
             {
                 TH1D *clone = (TH1D *)histo->Clone();
                 histos_.push_back(clone);
                 histos_.back()->SetDirectory(0);
-                std::cout << "created histogram clone " << histos_.back() << std::endl;
+                std::cout << debug_string_
+                          << fmt::format("Created histogram clone of {} ({}) in {}", histogram_name_, fmt::ptr(histo),
+                                         fmt::ptr(histos_.back()))
+                          << std::endl;
             }
             initialized_ = true;
         }
         else
         {
-            std::cout << "HistoReader " << instance_label_ << ": scale factor histogram not found in file " << file
-                      << std::endl;
+            std::cout << debug_string_
+                      << fmt::format("Histogram {} not valid in file {}!", histogram_name_, path_to_file_) << std::endl;
             throw std::exception();
         }
         file->Close();
     }
     else
     {
-        std::cout << "HistoReader " << instance_label_ << ": scale factor file not read" << std::endl;
+        std::cout << debug_string_ << fmt::format("File {} not valid!", path_to_file_) << std::endl;
         throw std::exception();
     }
 }
@@ -76,19 +83,21 @@ float HistoReader::operator()(uint thread, float x)
 {
     if (!initialized_)
     {
-        std::cout << "HistoReader " << instance_label_ << ": not initiliazed" << std::endl;
+        std::cout << debug_string_ << fmt::format("Not initiliazed!") << std::endl;
         throw std::exception();
     }
 
     if (histos_.empty())
     {
-        std::cout << "HistoReader " << instance_label_ << ": no histograms found" << std::endl;
+        std::cout << debug_string_ << fmt::format("No available histograms found!") << std::endl;
         throw std::exception();
     }
 
     if (thread > (histos_.size() - 1))
     {
-        std::cout << "HistoReader " << instance_label_ << ": number of threads does not match the number of histograms"
+        std::cout << debug_string_
+                  << fmt::format("Number/index of thread ({}) does not match the available number of histograms ({})!",
+                                 thread, histos_.size())
                   << std::endl;
         throw std::exception();
     }
