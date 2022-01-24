@@ -8,11 +8,11 @@ template <class T> class HistoReader
     HistoReader(std::string instance_label, std::string path_to_file, std::string histogram_name, bool use_bin_error,
                 uint nthreads);
     ~HistoReader();
-    float operator()(uint thread, T input);
+    float operator()(uint thread, T input) const;
     void UseEdgeBins(bool use_edge_bins);
 
   private:
-    void PrintHistoInfo(TH1D *histo);
+    void PrintHistoInfo(TH1D *histo) const;
     std::string instance_label_;
     std::string path_to_file_;
     std::string histogram_name_;
@@ -90,7 +90,7 @@ HistoReader<T>::HistoReader(std::string instance_label, std::string path_to_file
     std::cout << debug_string_ << "Finished initialization." << std::endl;
 }
 
-template <class T> void HistoReader<T>::PrintHistoInfo(TH1D *histo)
+template <class T> void HistoReader<T>::PrintHistoInfo(TH1D *histo) const
 {
     std::cout << fmt::format("\t\t\t\t name: {}, title: {}", histo->GetName(), histo->GetTitle()) << std::endl;
     std::cout << fmt::format("\t\t\t\t # bins: {}, xmin: {}, xmax: {}", histo->GetNbinsX(),
@@ -104,7 +104,7 @@ template <class T> void HistoReader<T>::UseEdgeBins(bool use_edge_bins)
     use_edge_bins_ = use_edge_bins;
 }
 
-template <class T> float HistoReader<T>::operator()(uint thread, T input)
+template <class T> float HistoReader<T>::operator()(uint thread, T input) const
 {
     if (!initialized_)
     {
