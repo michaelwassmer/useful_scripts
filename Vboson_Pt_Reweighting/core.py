@@ -972,7 +972,7 @@ def plot_hists_root(hists, options):
             break
     for i, roothist in enumerate(roothists):
         if isTGraph:
-            objects['multigraph'].Add(roothist)
+            objects['multigraph'].Add(roothist,"P")
         elif dimension == 1:
             if 'stack' not in options.draw_commands[i]:
                 if first_draw:
