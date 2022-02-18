@@ -78,6 +78,8 @@ n_keys = len(input_file.GetListOfKeys())
 n_bins = 0
 n_problematic_bins = 0
 dirs = {}
+keys = set()
+
 # loop over the keys of the input root file (histograms)
 for j, key in enumerate(input_file.GetListOfKeys()):
     # print(key.GetName())
@@ -103,6 +105,12 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         #print ("signal uncertainty for background process, not necessary ...")
         #print ("continuing ...")
         continue
+    if not options.transferfactor:
+        if histo_name in keys:
+            print ("double histos in file !")
+            exit()
+        else:
+            keys.add(histo_name)
     # get some information from the histogram
     histo_title = object.GetTitle()
     histo_nbins = object.GetNbinsX()
@@ -163,10 +171,9 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                             bin_content = 0.01
                             bin_error = 0.01
                         elif bin_content > 100.:
-                            print ("setting transfer factor to 100")
-                            exit()
-                            bin_content = 100.
-                            bin_error = 100.
+                            print ("transfer factor greater than 100, is this correct?")
+                            #bin_content = 100.
+                            #bin_error = 100.
         # create a new histogram with only one bin
         histo_one_bin = ROOT.TH1F(
             histo_name + "_" + "bin" + "_" + str(i),

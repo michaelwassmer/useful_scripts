@@ -87,6 +87,7 @@ branches = [
     "N_LoosePhotons",
     "N_TightElectrons",
     "N_TightMuons",
+    "N_BTagsM",
     "CaloMET_PFMET_ratio",
     "DeltaPhi_AK4Jet_MET",
     "M_W_transverse",
@@ -124,9 +125,9 @@ if not options.is_dataframe and options.save:
 
 binning_x = [250+(10*i) for i in range(101)]
 
-reference_events = data_frame.Filter(options.selection).Define("AK15Jet_Pt_0","AK15Jet_Pt[0]").Define("M_W_transverse_0","M_W_transverse[0]")
+reference_events = data_frame.Filter(options.selection).Define("M_W_transverse_0","M_W_transverse[0]").Define("AK15Jet_Pt_0","AK15Jet_Pt[0]")
 histo = None
-histo = reference_events.Define("WEIGHT1", "Weight_XS*Weight_GEN_nom*Weight_pu69p2*Weight_CSV").Histo1D(
+histo = reference_events.Define("WEIGHT1", "Weight_XS*Weight_GEN_nom").Histo1D(
     (options.variable_x, options.variable_x, len(binning_x)-1, array('d',binning_x)),
     options.variable_x,
     "WEIGHT1"
