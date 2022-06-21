@@ -6,6 +6,7 @@ usage = "Usage: %prog [options] input_file.root\n"
 parser = OptionParser(usage=usage)
 parser.add_option("--files",action="store_true", dest="files", help="flag to tell the script that it should loop over local files", default=False)
 parser.add_option("--maxevents", action="store", dest="maxevents", help="maximum number of events to loop over", default="10000")
+parser.add_option("--txtfile",action="store_true", dest="txtfile", help="flat to tell the script whether a txt file with the desired files is given", default=False)
 
 (options, args) = parser.parse_args()
 
@@ -81,10 +82,19 @@ if not options.files:
 
 else:
     n_events = 0
-    for file in args:
+    files_all = None
+    if not options.txtfile:
+        files_all = args
+    else:
+        with open(args[0], "r") as txtfile:
+            lines = txtfile.readlines()
+            files_all = [line.rstrip('\n') for line in lines]
+            #print(files_all)
+    for file in files_all:
+        print("file: ",file)
         if n_events < max_events:
             files.append(str(file))
-            root_file=ROOT.TFile.Open(file,"READ")
+            root_file=ROOT.TFile.Open(str(file),"READ")
             n_events+=root_file.Get("Events").GetEntries()
             root_file.Close()
 
@@ -96,10 +106,13 @@ handlePruned = Handle("std::vector<reco::GenParticle>")
 handlePacked = Handle("std::vector<pat::PackedGenParticle>")
 eventinfo = Handle("GenEventInfoProduct")
 #lheinfo = Handle("LHEEventProduct")
+handleGenJets = Handle("std::vector<reco::GenJet>")
+
 labelPruned = "prunedGenParticles"
 labelPacked = "packedGenParticles"
 labelWeight = "generator"
 #labelLHE = "externalLHEProducer"
+labelGenJets = "slimmedGenJets"
 
 top_pt = ROOT.TH1F("Top_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,2000)
 top_pt.GetXaxis().SetTitle("Top Quark/Antiquark p_{T}[GeV]")
@@ -123,6 +136,9 @@ m_w_sm.GetXaxis().SetTitle("m_{T}[GeV]")
 m_w_dm = ROOT.TH1F("M_W_DM"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,400)
 m_w_dm.GetXaxis().SetTitle("m_{T}[GeV]")
 
+genjet_pt = ROOT.TH1F("Jet_Pt"+"_Mphi_"+mphi+"_Mchi_"+mchi,"Vector Monotop M_{#phi}="+mphi+" M_{#chi}="+mchi,20,0,1000)
+genjet_pt.GetXaxis().SetTitle("GenJet p_{T}[GeV]")
+
 count = 0
 # loop over files
 for filename in files:
@@ -135,10 +151,12 @@ for filename in files:
         event.getByLabel(labelPruned, handlePruned)
         event.getByLabel(labelWeight, eventinfo)
         #event.getByLabel(labelLHE, lheinfo)
+        event.getByLabel(labelGenJets, handleGenJets)
         # get the products (prunedGenParticles collection, GenEventInfoProduct and LHEEventProduct)
         pruned = handlePruned.product()
         weight = eventinfo.product().weight()
         #lhe_weight = lheinfo.product().originalXWGTUP()
+        genjets = handleGenJets.product()
         
         everything_found = False
         top_p4 = None
@@ -165,10 +183,10 @@ for filename in files:
             if abs(p.pdgId())==6 and p.isHardProcess():
                 top_found = True
                 top_p4 = p.p4()
-            if p.pdgId()==18 and p.isPromptFinalState():
+            if p.pdgId()==5000521 and p.isPromptFinalState():
                 dm_1_found = True
                 dm_1_p4 = p.p4()
-            if p.pdgId()==-18 and p.isPromptFinalState():
+            if p.pdgId()==-5000521 and p.isPromptFinalState():
                 dm_2_found = True
                 dm_2_p4 = p.p4()
             if abs(p.pdgId())==5 and p.isHardProcess() and abs(p.mother(0).pdgId())==6:
@@ -208,6 +226,9 @@ for filename in files:
         dm_pt.Fill(dm_1_p4.pt(),weight)
         dm_pt.Fill(dm_2_p4.pt(),weight)
         med_pt.Fill((dm_1_p4+dm_2_p4).pt(),weight)
+        
+        for genjet in genjets:
+            genjet_pt.Fill(genjet.pt(),weight)
 
 top_pt.Scale(1./top_pt.Integral())
 #top_pt.Draw("hist")
@@ -220,6 +241,7 @@ dr_max_b_q_qbar.Scale(1./dr_max_b_q_qbar.Integral())
 dr_max_b_q_qbar_top_pt.Scale(1./dr_max_b_q_qbar_top_pt.Integral())
 m_w_sm.Scale(1./m_w_sm.Integral())
 m_w_dm.Scale(1./m_w_dm.Integral())
+genjet_pt.Scale(1./genjet_pt.Integral())
 
 output_file = ROOT.TFile.Open("GenStudies_"+"Mphi_"+mphi+"_Mchi_"+mchi+".root","RECREATE")
 output_file.WriteTObject(top_pt)
@@ -229,4 +251,5 @@ output_file.WriteTObject(dr_max_b_q_qbar)
 output_file.WriteTObject(dr_max_b_q_qbar_top_pt)
 output_file.WriteTObject(m_w_sm)
 output_file.WriteTObject(m_w_dm)
+output_file.WriteTObject(genjet_pt)
 output_file.Close()
