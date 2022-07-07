@@ -1,11 +1,46 @@
 from __future__ import print_function
 from optparse import OptionParser
 from array import array
+import collections
+
+# function to check whether a variable is a typical ROOT-style array variable with a requested index, e.g. jet_pt[5]
+def IsArrVar(arr_var):
+    if "[" in arr_var and "]" in arr_var:
+        index_1 = arr_var.find("[")
+        index_2 = arr_var.find("]")
+        index = arr_var[1+int(index_1):int(index_2)]
+        if index.isdigit():
+            return True
+        else:
+            return False
+    else:
+        return False
+
+# function to find the requested index of an array variable, e.g. 5 in jet_pt[5]
+def FindArrVarIndex(arr_var):
+    if not IsArrVar(arr_var):
+        raise ValueError("The given array variable >>>{}<<< doesn't have the expected structure of an array variable var[number]".format(arr_var),"Exiting ...")
+    index_1 = arr_var.find("[")
+    index_2 = arr_var.find("]")
+    index = arr_var[1+int(index_1):int(index_2)]
+    return index
+
+# function to transform an array variable with a requested index in a variable without the [] construction, e.g. jet_pt[5]->jet_pt_5
+def TransformArrVar(arr_var):
+    index = FindArrVarIndex(arr_var)
+    transformed_arr_var = arr_var.replace("["+str(index)+"]","_"+str(index))
+    return transformed_arr_var
+
+# function to remove the requested index from an array variable, e.g. jet_pt[5]->jet_pt
+def RemoveArrVarIndex(arr_var):
+    index = FindArrVarIndex(arr_var)
+    arr_var_without_index = arr_var.replace("["+str(index)+"]","")
+    return arr_var_without_index
 
 usage = "usage: %prog [options] file1.root file2.root"
 parser = OptionParser()
 parser.add_option(
-    "-n", "--name", dest="name", type="string", default="", help="name to recognize output"
+    "-n", "--name", dest="name", type="string", default="unnamed", help="name to recognize output"
 )
 parser.add_option(
     "-t",
@@ -89,7 +124,7 @@ parser.add_option(
 vars_1D = options.variables_1D.split(",")
 vars_2D = options.variables_2D.split(",")
 add_vars = options.add_variables.split(",")
-constr_vars = options.constr_variables.split(",")
+constr_vars = options.constr_variables.split("#")
 print("1D variables: ",vars_1D)
 print("2D variables: ",vars_2D)
 print("additional variables: ",add_vars)
@@ -107,14 +142,26 @@ if constr_vars == [""]:
 
 # determine the needed branches from the desired template variables and the additional variables
 branches = []
+constructed_vars = collections.OrderedDict()
 for var_1D in vars_1D:
     var = None
+    var_weight = None
     if ";" in var_1D:
-        var = var_1D.split(";")[0]
+        var_1D_list = var_1D.split(";")
+        var = var_1D_list[0]
+        if len(var_1D_list) == 5: var_weight = var_1D_list[4]
     else:
         var = var_1D
-    if not var in branches:
+    if var and IsArrVar(var):
+        constructed_vars[TransformArrVar(var)]=var
+        var = RemoveArrVarIndex(var)
+    if var_weight and IsArrVar(var_weight):
+        constructed_vars[TransformArrVar(var_weight)]=var_weight
+        var_weight = RemoveArrVarIndex(var_weight)
+    if var and (not var in branches):
         branches.append(var)
+    if var_weight and (not var_weight in branches):
+        branches.append(var_weight)
 for var_2D in vars_2D:
     vars = var_2D.split(":")
     var_1D_x = vars[0]
@@ -150,12 +197,12 @@ from ROOT import RDataFrame as RDF
 ROOT.ROOT.EnableImplicitMT(options.nthreads)
 
 # dictionary of variables you explicitly construct from the branches above
-constructed_vars = {}
 for constr_var in constr_vars:
     var = None
     formula = None
-    var,formula = constr_var.split("=")
+    var,formula = constr_var.split(":=")
     constructed_vars[var] = formula
+print(constructed_vars)
 
 # add branches to a corresponding ROOT vector to later pass to initialization of RDataFrame
 branch_vec = ROOT.vector("string")()
@@ -198,31 +245,45 @@ selection = options.selection
 histos_1D={}
 histos_2D={}
 
-# apply the selection from above to the RDataFrame and define a weight on the remaining events
+# define a weight on the events
 # the weight can also be a branch or constructed from several branches, e.g. generator_weight*sample_weight
-reference_events = data_frame.Filter(selection).Define("weight",options.weight)
-
-# define constructed variables on RDataFrame after selection
+reference_events = data_frame.Define("weight",options.weight)
+# define constructed variables on RDataFrame
 for constructed_var in constructed_vars:
     reference_events=reference_events.Define(constructed_var,constructed_vars[constructed_var])
 
+# apply the selection from above to the RDataFrame
+reference_events = reference_events.Filter(selection)
+
 # loop over 1D variables given as input arguments
-for var_1D in vars_1D:
-    var,nbinsx,x_low,x_high = None,None,None,None
+for i, var_1D in enumerate(vars_1D):
+    var,nbinsx,x_low,x_high,var_weight = None,30,1,1,None
     Histo1D_argument = None
+    weight = "weight"
     # if a binning and range is given use that binning and range, if not use 50 bins and let ROOT decide the range
     if ";" in var_1D:
-        var,nbinsx,x_low,x_high = var_1D.split(";")
-        Histo1D_argument = ("{}".format(var), "title;{};arbitrary units".format(var), int(nbinsx), float(x_low), float(x_high))
+        var_1D_list = var_1D.split(";")
+        var,nbinsx,x_low,x_high = str(var_1D_list[0]), int(var_1D_list[1]), float(var_1D_list[2]), float(var_1D_list[3])
+        if len(var_1D_list) == 5: var_weight = str(var_1D_list[4])
     else:
         var = var_1D
-        Histo1D_argument = ("{}".format(var), "title;{};arbitrary units".format(var), 50, 1, 1)
+    if var and IsArrVar(var):
+        var = TransformArrVar(var)
+    histo_key = "{}".format(var)
+    if var_weight:
+        if IsArrVar(var_weight):
+            var_weight = TransformArrVar(var_weight)
+        if "var_weight_{}".format(var_weight) not in reference_events.GetDefinedColumnNames():
+            reference_events = reference_events.Define("var_weight_{}".format(var_weight),"weight*{}".format(var_weight))
+        histo_key += "_{}".format(var_weight)
+        weight = "var_weight_{}".format(var_weight)
+    Histo1D_argument = (histo_key, "title;{};arbitrary units".format(var), nbinsx, x_low, x_high)
     #print(var_1D)
     #print(Histo1D_argument)
     # define the desired histograms on the RDataFrame after selection and assign the previously defined weight to the events
-    histos_1D[var]=reference_events.Histo1D(
+    histos_1D[histo_key]=reference_events.Histo1D(
                                           Histo1D_argument,
-                                          var,"weight"
+                                          var,weight
                                           )
 
 #print(histos_1D)
