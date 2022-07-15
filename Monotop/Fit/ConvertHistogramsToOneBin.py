@@ -2,6 +2,7 @@
 from __future__ import print_function
 import ROOT
 import sys
+from array import array
 
 # option parser
 from optparse import OptionParser
@@ -53,18 +54,19 @@ parser.add_option(
 
 # catch some errors
 if(len(args)!=1):
-    print("exactly one input root file has to be given as an argument!")
+    print("exactly one input ROOT file has to be given as an argument!")
     print("exiting ...")
     exit()
 input = args[0]
 if ".root" not in input:
-   print("given input file probably is not  a root file!")
+   print("given input file is probably not a ROOT file!")
    print("exiting ...")
    exit()
 if options.drop and options.repair:
    print("you cannot drop and repair the bins at the same time!")
    print("exiting ...")
    exit()
+
 # open root file read-only
 input_file = ROOT.TFile.Open(input, "READ")
 
@@ -80,14 +82,21 @@ n_problematic_bins = 0
 dirs = {}
 keys = set()
 
+x_binnumber = array("i",[-1])
+y_binnumber = array("i",[-1])
+z_binnumber = array("i",[-1])
+
 # loop over the keys of the input root file (histograms)
 for j, key in enumerate(input_file.GetListOfKeys()):
     # print(key.GetName())
     if j % 100 == 0:
         print (str(j) + "/" + str(n_keys))
+    # read object
     object = input_file.Get(key.GetName())
     # check if the opened object is a ROOT histogram
-    if not isinstance(object, ROOT.TH1):
+    isTH1 = isinstance(object, ROOT.TH1) and (not isinstance(object, ROOT.TH2))
+    isTH2 = isinstance(object, ROOT.TH2)
+    if (not isTH1) and (not isTH2):
         #print ("no TH1")
         #print ("continuing ...")
         continue
@@ -113,10 +122,19 @@ for j, key in enumerate(input_file.GetListOfKeys()):
             keys.add(histo_name)
     # get some information from the histogram
     histo_title = object.GetTitle()
-    histo_nbins = object.GetNbinsX()
+    histo_nbins = object.GetNcells()
     # print("nbins: ",histo_nbins)
     # loop over the bins of the histogram
-    for i in range(1,histo_nbins + 1):
+    for i in range(0,histo_nbins):
+        x_binnumber[0],y_binnumber[0],z_binnumber[0] = -1,-1,-1
+        object.GetBinXYZ(i,x_binnumber,y_binnumber,z_binnumber)
+        #print(x_binnumber[0],y_binnumber[0],z_binnumber[0])
+        if isTH1 and (x_binnumber[0]==0 or x_binnumber[0]>object.GetNbinsX()):
+            print("ignoring underflow/overflow bin ...")
+            continue
+        if isTH2 and ((x_binnumber[0]==0 or x_binnumber[0]>object.GetNbinsX()) or (y_binnumber[0]==0 or y_binnumber[0]>object.GetNbinsY())):
+            print("ignoring underflow/overflow bin ...")
+            continue
         n_bins += 1
         if i not in dirs:
             dirs[i]=output_file.mkdir("bin_"+str(i))
@@ -129,7 +147,7 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         except ZeroDivisionError:
             bin_ratio = None
         # some sanity checks for the bins (optional)
-        if not options.warnings and i > 0 and i <= histo_nbins:
+        if not options.warnings:
             print_bin_info = False
             if bin_content <= 0.0:
                 print ("bin content zero or negative, please check!")
@@ -175,13 +193,23 @@ for j, key in enumerate(input_file.GetListOfKeys()):
                             #bin_content = 100.
                             #bin_error = 100.
         # create a new histogram with only one bin
+        histo_label = None
+        if isTH1:
+            histo_label = "bin_{}".format(x_binnumber[0])
+            histo_label_nice = "bin {}".format(x_binnumber[0])
+            bin_label = "{} #leq x < {}".format(object.GetXaxis().GetBinLowEdge(x_binnumber[0]),object.GetXaxis().GetBinLowEdge(x_binnumber[0])+object.GetXaxis().GetBinWidth(x_binnumber[0]))
+        elif isTH2:
+            histo_label = "binx_{}_biny_{}".format(x_binnumber[0],y_binnumber[0])
+            histo_label_nice = "binx {}, biny {}".format(x_binnumber[0],y_binnumber[0])
+            bin_label = "#splitline{{{} #leq x < {}}}{{{} #leq y < {}}}".format(object.GetXaxis().GetBinLowEdge(x_binnumber[0]),object.GetXaxis().GetBinLowEdge(x_binnumber[0])+object.GetXaxis().GetBinWidth(x_binnumber[0]),object.GetYaxis().GetBinLowEdge(y_binnumber[0]),object.GetYaxis().GetBinLowEdge(y_binnumber[0])+object.GetYaxis().GetBinWidth(y_binnumber[0]))
         histo_one_bin = ROOT.TH1F(
-            histo_name + "_" + "bin" + "_" + str(i),
-            histo_title + "_" + "bin" + "_" + str(i),
+            histo_name + "__" + histo_label,
+            histo_title + " " + histo_label_nice,
             1,
-            object.GetBinLowEdge(i),
-            object.GetBinLowEdge(i) + object.GetBinWidth(i),
+            0,
+            1,
         )
+        histo_one_bin.GetXaxis().SetBinLabel(1,bin_label)
         # write the bin content and error of the current bin of the histogram to the histogram with only one bin
         histo_one_bin.SetBinContent(1, bin_content)
         histo_one_bin.SetBinError(1, bin_error)
