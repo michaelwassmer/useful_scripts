@@ -136,8 +136,6 @@ for j, key in enumerate(input_file.GetListOfKeys()):
             print("ignoring underflow/overflow bin ...")
             continue
         n_bins += 1
-        if i not in dirs:
-            dirs[i]=output_file.mkdir("bin_"+str(i))
         # get bin content and error
         bin_content = object.GetBinContent(i)
         bin_error = object.GetBinError(i)
@@ -216,7 +214,18 @@ for j, key in enumerate(input_file.GetListOfKeys()):
         # remove automatic memory handling of ROOT for the new one-bin histogram
         histo_one_bin.SetDirectory(0)
         # write the histogram to the output file
-        dirs[i].WriteTObject(histo_one_bin)
+        if isTH1:
+            if x_binnumber[0] not in dirs:
+                dirs[x_binnumber[0]]=output_file.mkdir("bin_"+str(x_binnumber[0]))
+            dirs[x_binnumber[0]].WriteTObject(histo_one_bin)
+        elif isTH2:
+            if x_binnumber[0] not in dirs:
+                dirs[x_binnumber[0]] = {}
+                output_file.mkdir("binx_"+str(x_binnumber[0]))
+            if y_binnumber[0] not in dirs[x_binnumber[0]]:
+                output_file.Get("binx_"+str(x_binnumber[0])).mkdir("biny_"+str(y_binnumber[0]))
+                dirs[x_binnumber[0]][y_binnumber[0]]=output_file.Get("binx_"+str(x_binnumber[0])).Get("biny_"+str(y_binnumber[0]))
+            dirs[x_binnumber[0]][y_binnumber[0]].WriteTObject(histo_one_bin)
 
 # close the input and output root files
 input_file.Close()
