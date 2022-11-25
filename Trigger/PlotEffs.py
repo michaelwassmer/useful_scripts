@@ -10,6 +10,9 @@ parser.add_option(
     "-l", "--label", dest="label", type="string", default="unlabeled", help="label to recognize output files"
 )
 parser.add_option(
+    "-e", "--era", dest="era", type="string", default="era", help="era label"
+)
+parser.add_option(
     "--mc_files",
     dest="mc_files",
     type="string",
@@ -97,8 +100,16 @@ for data_file,data_label in zip(data_files,data_labels):
 
 print(data_effs)
 
-probe_triggers_label = ROOT.TLatex(0.2,1.15,probe_triggers)
-probe_triggers_label.SetTextSize(0.025)
+era_label = ROOT.TLatex(400,1.12,options.era)
+era_label.SetTextSize(0.035)
+
+probe_triggers_label = ROOT.TLatex(20,1.05,probe_triggers)
+probe_triggers_label.SetTextSize(0.03)
+
+cms_label = ROOT.TLatex(0.2,1.17,"CMS")
+wip_label = ROOT.TLatex(0.2,1.12,"work in progress")
+cms_label.SetTextSize(0.05)
+wip_label.SetTextSize(0.035)
 
 # plots for different variable in same region
 for mc_eff_set,data_eff_set,mc_label,data_label in zip(mc_effs,data_effs,mc_labels,data_labels):
@@ -129,7 +140,7 @@ for mc_eff_set,data_eff_set,mc_label,data_label in zip(mc_effs,data_effs,mc_labe
     l.Draw("same")
     line.Draw("same")
     probe_triggers_label.Draw("same")
-    c.Print(mc_label.replace(" ","")+"__"+data_label.replace(" ","")+".pdf")
+    c.Print(options.label+"_"+mc_label.replace(" ","")+"__"+data_label.replace(" ","")+".pdf")
 
 # plots with same variable in different regions, therefore transpose lists
 mc_effs_t = np.array(mc_effs).T.tolist()
@@ -144,7 +155,7 @@ for mc_eff_set,data_eff_set,var_label in zip(mc_effs_t,data_effs_t,variables_lab
     line.SetLineStyle(ROOT.kDashed)
     dummy_eff = mc_eff_set[0].Clone("dummy")
     dummy_eff.SetLineColorAlpha(0,0)
-    dummy_eff.SetTitle(";X;#epsilon")
+    dummy_eff.SetTitle(";{};efficiency".format(var_label))
     dummy_eff.Draw()
     ROOT.gPad.Update()
     dummy_eff.GetPaintedGraph().GetXaxis().SetRangeUser(0,500)
@@ -164,5 +175,8 @@ for mc_eff_set,data_eff_set,var_label in zip(mc_effs_t,data_effs_t,variables_lab
         l.AddEntry(data_eff,"{}, X={}".format(data_eff.GetTitle(),data_eff.GetPaintedGraph().GetXaxis().GetTitle()),"lp")
     l.Draw("same")
     line.Draw("same")
+    cms_label.Draw("same")
+    wip_label.Draw("same")
     probe_triggers_label.Draw("same")
-    c.Print(var_label.replace(" ","").replace("(GeV)","")+".pdf")
+    era_label.Draw("same")
+    c.Print(options.label+"_"+var_label.replace(" ","").replace("(GeV)","")+".pdf")

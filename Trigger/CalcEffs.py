@@ -5,6 +5,10 @@ label = sys.argv[1]
 f_ref_path = sys.argv[2]
 f_probe_path = sys.argv[3]
 
+if not "eff" in label:
+    print("you forgot eff in label")
+    exit()
+
 f_ref = ROOT.TFile.Open(f_ref_path, "READ")
 f_probe = ROOT.TFile.Open(f_probe_path, "READ")
 
