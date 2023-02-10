@@ -168,18 +168,33 @@ for var_2D in vars_2D:
     var_1D_y = vars[1]
     varx = None
     vary = None
+    var_weight = None
     if ";" in var_1D_x:
-        varx = var_1D_x.split(";")[0]
+        varx_list = var_1D_x.split(";")
+        varx = varx_list[0]
     else:
         varx = var_1D_x
     if ";" in var_1D_y:
-        vary = var_1D_y.split(";")[0]
+        vary_list = var_1D_y.split(";")
+        vary = vary_list[0]
+        if len(vary_list) == 5: var_weight = vary_list[4]
     else:
         vary = var_1D_y
-    if not varx in branches:
+    if varx and IsArrVar(varx):
+        constructed_vars[TransformArrVar(varx)]=varx
+        varx = RemoveArrVarIndex(varx)
+    if vary and IsArrVar(vary):
+        constructed_vars[TransformArrVar(vary)]=vary
+        vary = RemoveArrVarIndex(vary)
+    if var_weight and IsArrVar(var_weight):
+        constructed_vars[TransformArrVar(var_weight)]=var_weight
+        var_weight = RemoveArrVarIndex(var_weight)
+    if varx and (not varx in branches):
         branches.append(varx)
-    if not vary in branches:
+    if vary and (not vary in branches):
         branches.append(vary)
+    if var_weight and (not var_weight in branches):
+        branches.append(var_weight)
 for add_var in add_vars:
     if not add_var in branches:
         branches.append(add_var)
