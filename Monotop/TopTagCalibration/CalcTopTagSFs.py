@@ -16,9 +16,8 @@ The input is a ROOT file containing all the necessary templates from the monotop
 # imports
 import sys
 from Helper import *
-import uproot as up
-import statsmodels.api as sm
 import numpy as np
+import json
 
 #########
 ### 1 ###
@@ -53,9 +52,9 @@ dictionary structure:
 """
 hists = ReadTemplates(infile, ["CR_Gamma"], ["G1Jet", "data_obs"], systs)
 
-#########
-### 2 ###
-#########
+#############
+### 2 & 3 ###
+#############
 
 # dictionary to contain all the mistag fractions as Hist objects
 mfs = {}
@@ -160,6 +159,27 @@ print(mfs["mc"]["nom"])
 print(mfs["data"])
 print(sfs["nom"])
 
-#########
-### 3 ###
-#########
+# dump information into json
+json_dict = {}
+
+json_dict["eff_mc"] = {
+    "edges": list(mfs["mc"]["nom"].edges),
+    "values": list(mfs["mc"]["nom"].values),
+    "uncertainties": list(mfs["mc"]["nom"].errors),
+}
+
+json_dict["eff_data"] = {
+    "edges": list(mfs["data"].edges),
+    "values": list(mfs["data"].values),
+    "uncertainties": list(mfs["data"].errors),
+}
+
+json_dict["sf_data_mc"] = {
+    "edges": list(sfs["nom"].edges),
+    "values": list(sfs["nom"].values),
+    "uncertainties": list(sfs["nom"].errors),
+}
+
+with open("qcd_mistag.json", "w") as outfile:
+    json.dump(json_dict, outfile, indent=4)
+
