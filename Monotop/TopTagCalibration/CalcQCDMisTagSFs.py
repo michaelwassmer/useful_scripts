@@ -1,15 +1,11 @@
 """
-This script calculates the scale factors for the top tag efficiency and the qcd mistag fraction for the mono-top analysis.
-First, the qcd mistag fraction is calculated based on the gamma+jets control region, which is very pure in events containing genuine QCD jets.
-Based on the qcd mistag fractions and the corresponding scale factors, the top tag efficiencies and their corresponding scale factors are calculated.
+This script calculates the data/mc scale factors of the QCD-jet mistag fraction for the mono-top analysis.
+The qcd mistag fraction is calculated based on the gamma+jets control region, which is very pure in events containing genuine QCD jets.
 The input is a ROOT file containing all the necessary templates from the monotop analysis and an optional comma-separated list of systematic uncertainties.
 
 1. ROOT file needs to be read. Histograms need to read and converted to numpy.
-2. QCD mistag fractions are calculated for MC and data in the gamma+jets control region.
-3. QCD mistag fraction scale factors are calculated. Uncertainties on the scale factors need to be estimated.
-4. QCD mistag scale factors are applied to events with QCD jets in control regions where the top tag efficiencies and scale factors are supposed to be calculated.
-5. Top tag efficiencies are calculated for MC and data.
-6. Top tag efficiency scale factors are calculated. Uncertainties on the scale factors need to be estimated.
+2. QCD mistag fractions are calculated for MC and data in the gamma+jets control region as well as corresponding data/mc scale factors.
+3. Save the mistag fractions and scale factors in a json.
 
 """
 
@@ -23,10 +19,16 @@ import json
 ### 1 ###
 #########
 
+# some basic input checks
 if len(sys.argv) < 2:
     raise Exception(
         "Not enough input arguments.",
         "You need at least the input ROOT file containing the histograms.",
+    )
+elif len(sys.argv) > 3:
+    raise Exception(
+        "Too many input arguments.",
+        "You need either only one input argument, a ROOT file, or optionally a comma-separated list of systematics as second argument.",
     )
 
 # input ROOT file
@@ -44,6 +46,7 @@ if len(sys.argv) == 3:
     systs = sys.argv[2]
     systs = systs.split(",")
 
+
 """
 read the necessary histograms, i.e. in gamma+jets CR, and put them into a dictionary
 dictionary structure:
@@ -52,9 +55,9 @@ dictionary structure:
 """
 hists = ReadTemplates(infile, ["CR_Gamma"], ["G1Jet", "data_obs"], systs)
 
-#############
-### 2 & 3 ###
-#############
+#########
+### 2 ###
+#########
 
 # dictionary to contain all the mistag fractions as Hist objects
 mfs = {}
@@ -86,9 +89,10 @@ mc_gjets_cr_tag_hist = hists[mc_gjets_cr_tag_name]
 # gamma+jets MC template in gamma+jets CR irrespective of tag or not
 mc_gjets_cr_all_hist = hists[mc_gjets_cr_all_name]
 
+# qcd mistag fractions in mc
 mfs["mc"] = {}
 
-# calculate qcd mistag fraction in MC by just dividing tag/all
+# calculate qcd mistag fraction in nominal (nom, i.e. no systematic variations) MC by just dividing tag/all
 # statistical uncertainties are calculated from binomial confidence interval and then symmetrized
 mfs["mc"]["nom"] = Hist(
     "mfs_mc_nom",
@@ -99,9 +103,11 @@ mfs["mc"]["nom"] = Hist(
     ),
 )
 
-# dictionary to contain all the scale factors as Hist objects
+# dictionary to contain all the data/mc scale factors as Hist objects
 sfs = {}
 
+# nominal data/mc scale factor
+# statistical data uncertainty and statisticam mc uncertainty are added in quadrature to obtain overall uncertainty
 sfs["nom"] = Hist(
     "sfs_nom",
     mfs["data"].edges,
@@ -119,20 +125,25 @@ sfs["nom"] = Hist(
     ),
 )
 
-# repeat the same for systematic variations
-# don't consider stat uncertainties for systematic variations
+# repeat the calculations from above for systematic variations of mc
+# don't consider stat uncertainties of the systematic variations
+
+# loop over systematics
 for syst in systs:
+    # loop over the two variations
     for var in ["Up", "Down"]:
         mc_gjets_cr_tag_syst_name = mc_gjets_cr_tag_name.replace("nom", syst + var)
         mc_gjets_cr_all_syst_name = mc_gjets_cr_all_name.replace("nom", syst + var)
         mc_gjets_cr_tag_syst_hist = hists[mc_gjets_cr_tag_syst_name]
         mc_gjets_cr_all_syst_hist = hists[mc_gjets_cr_all_syst_name]
+        # calculate the mistag fraction for systematically variated mc
         mfs["mc"][syst + var] = Hist(
             f"mfs_mc_{syst}{var}",
             mc_gjets_cr_tag_syst_hist.edges,
             mc_gjets_cr_tag_syst_hist.values / mc_gjets_cr_all_syst_hist.values,
             np.zeros_like(mc_gjets_cr_tag_syst_hist.values),
         )
+        # calculate mistag scale factor for systematically variated mc
         sfs[syst + var] = Hist(
             f"sfs_{syst}{var}",
             mfs["data"].edges,
@@ -148,6 +159,7 @@ for syst in systs:
         )
         + np.square(mfs["mc"]["nom"].errors)
     )
+    # calculate the total error of the nominal mistag scale factor by adding the single uncertainties in quadrature
     sfs["nom"].errors = np.sqrt(
         np.square(
             GetSymmUncFromUpDown(sfs[syst + "Up"].values, sfs[syst + "Down"].values)
@@ -155,31 +167,39 @@ for syst in systs:
         + np.square(sfs["nom"].errors)
     )
 
+# printout
 print(mfs["mc"]["nom"])
 print(mfs["data"])
 print(sfs["nom"])
 
+#########
+### 3 ###
+#########
+
 # dump information into json
 json_dict = {}
 
+# mistag fraction in mc
 json_dict["eff_mc"] = {
     "edges": list(mfs["mc"]["nom"].edges),
     "values": list(mfs["mc"]["nom"].values),
     "uncertainties": list(mfs["mc"]["nom"].errors),
 }
 
+# mistag fraction in data
 json_dict["eff_data"] = {
     "edges": list(mfs["data"].edges),
     "values": list(mfs["data"].values),
     "uncertainties": list(mfs["data"].errors),
 }
 
+# data/mc mistag scale factor
 json_dict["sf_data_mc"] = {
     "edges": list(sfs["nom"].edges),
     "values": list(sfs["nom"].values),
     "uncertainties": list(sfs["nom"].errors),
 }
 
+# save information in json file
 with open("qcd_mistag.json", "w") as outfile:
     json.dump(json_dict, outfile, indent=4)
-
