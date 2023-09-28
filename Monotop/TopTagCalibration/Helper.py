@@ -1,11 +1,18 @@
+# uproot to read ROOT files
 import uproot as up
+
+# statsmodels to calculate binomial confidence intervals
 import statsmodels.api as sm
+
+# numpy calculations with arrays
 import numpy as np
 
 
 # container for histogram information
 class Hist:
-    def __init__(self, name, edges, values, errors) -> None:
+    def __init__(
+        self, name: str, edges: list[float], values: list[float], errors: list[float]
+    ) -> None:
         self.name = name
         self.edges = edges
         self.values = values
@@ -21,10 +28,14 @@ class Hist:
         return str
 
 
-# useful functions
-
-
-def ReadTemplates(infile, cat_search_keys, proc_search_keys, syst_search_keys):
+# function to read templates/histograms from a ROOT file via uproot based on a few search
+# keys that need to be present in the name of the histogram
+def ReadTemplates(
+    infile: str,
+    cat_search_keys: list[str],
+    proc_search_keys: list[str],
+    syst_search_keys: list[str],
+) -> dict[str, Hist]:
     templates = {}
     # open ROOT file
     with up.open(infile) as rfile:
@@ -49,8 +60,8 @@ def ReadTemplates(infile, cat_search_keys, proc_search_keys, syst_search_keys):
     return templates
 
 
-# read histogram from file and return its edges, values, errors as a tuple
-def ReadHist(file, hist_name):
+# read specific histogram from file and return it as a Hist instance
+def ReadHist(file, hist_name: str) -> Hist:
     values = file[hist_name].values()
     errors = file[hist_name].errors()
     edges = file[hist_name].axis().edges()
@@ -58,7 +69,7 @@ def ReadHist(file, hist_name):
 
 
 # decide whether to keep a histogram depending on its name and some search keys
-def KeepHist(hist_name, search_keys):
+def KeepHist(hist_name: str, search_keys: list[str]) -> bool:
     keep_hist = False
     for search_key in search_keys:
         if search_key in hist_name:
@@ -68,29 +79,17 @@ def KeepHist(hist_name, search_keys):
 
 
 # calculate a symmetrized uncertainty from an up- and down-variation of a histogram
-def GetSymmUncFromUpDown(hist_up, hist_down):
+def GetSymmUncFromUpDown(hist_up: np.ndarray, hist_down: np.ndarray) -> np.ndarray:
     hist_diff = np.absolute(hist_up - hist_down)
     hist_diff = hist_diff / 2
     return hist_diff
 
 
 # calculate binomial error of a proportion based on the number of selected events and the total events
-def GetEffStatErrors(hist_selected, hist_all):
+def GetEffStatErrors(
+    hist_selected: np.ndarray, hist_all: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     down, up = sm.stats.proportion_confint(
         hist_selected, hist_all, alpha=0.32, method="beta"
     )
     return up, down
-
-def CalcSFsWithUncs(eff_1_mean, eff_2_mean, eff_1_std, eff_2_std):
-    rng = np.random.default_rng()
-    effs_1, effs_2 = rng.multivariate_normal(
-        [eff_1_mean, eff_2_mean],
-        [
-            [eff_1_std**2, eff_corr * eff_1_std * eff_2_std],
-            [eff_corr * eff_1_std * eff_2_std, eff_2_std**2],
-        ],
-        1000,
-    ).T
-    sfs = effs_1 / effs_2
-    sf_mean = sfs.mean()
-    sf_std = sfs.std()
