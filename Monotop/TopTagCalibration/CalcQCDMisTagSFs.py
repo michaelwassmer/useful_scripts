@@ -6,7 +6,6 @@ The input is a ROOT file containing all the necessary templates from the monotop
 1. ROOT file needs to be read. Histograms need to read and converted to numpy.
 2. QCD mistag fractions are calculated for MC and data in the gamma+jets control region as well as corresponding data/mc scale factors.
 3. Save the mistag fractions and scale factors in a json.
-
 """
 
 # imports

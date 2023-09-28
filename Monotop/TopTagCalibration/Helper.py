@@ -7,6 +7,7 @@ import statsmodels.api as sm
 # numpy calculations with arrays
 import numpy as np
 
+import copy
 
 # container for histogram information
 class Hist:
@@ -14,9 +15,9 @@ class Hist:
         self, name: str, edges: list[float], values: list[float], errors: list[float]
     ) -> None:
         self.name = name
-        self.edges = edges
-        self.values = values
-        self.errors = errors
+        self.edges = np.array(edges)
+        self.values = np.array(values)
+        self.errors = np.array(errors)
 
     def __str__(self):
         str = f"""
@@ -26,6 +27,42 @@ class Hist:
         errors: {self.errors}
         """
         return str
+
+    def add(
+        self, hist_to_add, factor: float = 1.0, add_uncs_quad: bool = False
+    ) -> None:
+        assert np.array_equal(self.edges, hist_to_add.edges)
+        assert len(self.values) == len(hist_to_add.values)
+        assert len(self.errors) == len(hist_to_add.errors)
+        if add_uncs_quad:
+            self.errors = np.sqrt(
+                np.square(self.errors) + np.square(abs(factor) * hist_to_add.errors)
+            )
+        else:
+            # reset errors
+            self.errors = np.zeros_like(self.values)
+        # add bin contents
+        self.values = self.values + (factor * hist_to_add.values)
+
+    def apply_sfs(self, sfs: list[float]) -> None:
+        assert len(self.values) == len(sfs)
+        assert len(self.errors) == len(sfs)
+        # calculate new bin contents
+        self.values = self.values * np.array(sfs)
+        # calculate new uncertainties
+        self.errors = self.errors * np.array(sfs)
+
+    def values_up(self) -> np.ndarray:
+        return self.values + self.errors
+
+    def values_down(self) -> np.ndarray:
+        return self.values - self.errors
+
+    def copy(self, new_name: str = ""):
+        clone = copy.deepcopy(self)
+        if new_name != "":
+            clone.name = new_name
+        return clone
 
 
 # function to read templates/histograms from a ROOT file via uproot based on a few search
