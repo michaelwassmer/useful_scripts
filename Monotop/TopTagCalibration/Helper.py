@@ -7,17 +7,32 @@ import statsmodels.api as sm
 # numpy calculations with arrays
 import numpy as np
 
+# to make copies of Hist class
 import copy
+
 
 # container for histogram information
 class Hist:
     def __init__(
-        self, name: str, edges: list[float], values: list[float], errors: list[float]
+        self,
+        name: str,
+        edges: list[float],
+        values: list[float] = [],
+        errors: list[float] = [],
     ) -> None:
         self.name = name
+        assert len(edges) > 1
         self.edges = np.array(edges)
-        self.values = np.array(values)
-        self.errors = np.array(errors)
+        if len(values) > 0:
+            assert len(values) == len(edges) - 1
+            self.values = np.array(values)
+        else:
+            self.values = np.zeros(len(self.edges) - 1)
+        if len(errors) > 0:
+            assert len(errors) == len(edges) - 1
+            self.errors = np.array(errors)
+        else:
+            self.errors = np.zeros(len(self.edges) - 1)
 
     def __str__(self):
         str = f"""
@@ -29,12 +44,13 @@ class Hist:
         return str
 
     def add(
-        self, hist_to_add, factor: float = 1.0, add_uncs_quad: bool = False
+        self, hist_to_add, add_uncs_quad: bool = False, factor: float = 1.0
     ) -> None:
         assert np.array_equal(self.edges, hist_to_add.edges)
-        assert len(self.values) == len(hist_to_add.values)
-        assert len(self.errors) == len(hist_to_add.errors)
+        # assert len(self.values) == len(hist_to_add.values)
+        # assert len(self.errors) == len(hist_to_add.errors)
         if add_uncs_quad:
+            # add uncertainties in quadrature if desired
             self.errors = np.sqrt(
                 np.square(self.errors) + np.square(abs(factor) * hist_to_add.errors)
             )
@@ -46,7 +62,7 @@ class Hist:
 
     def apply_sfs(self, sfs: list[float]) -> None:
         assert len(self.values) == len(sfs)
-        assert len(self.errors) == len(sfs)
+        # assert len(self.errors) == len(sfs)
         # calculate new bin contents
         self.values = self.values * np.array(sfs)
         # calculate new uncertainties
