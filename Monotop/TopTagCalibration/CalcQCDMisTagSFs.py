@@ -92,13 +92,14 @@ mc_gjets_cr_all_hist = hists[mc_gjets_cr_all_name]
 mfs["mc"] = {}
 
 # calculate qcd mistag fraction in nominal (nom, i.e. no systematic variations) MC by just dividing tag/all
-# statistical uncertainties are calculated from binomial confidence interval and then symmetrized
+# statistical uncertainties are calculated as crude max uncertainty estimation from template errors
 mfs["mc"]["nom"] = Hist(
     "mfs_mc_nom",
     mc_gjets_cr_tag_hist.edges,
     mc_gjets_cr_tag_hist.values / mc_gjets_cr_all_hist.values,
     GetSymmUncFromUpDown(
-        *GetEffStatErrors(mc_gjets_cr_tag_hist.values, mc_gjets_cr_all_hist.values)
+        mc_gjets_cr_tag_hist.values_up() / mc_gjets_cr_all_hist.values_down(),
+        mc_gjets_cr_tag_hist.values_down() / mc_gjets_cr_all_hist.values_up(),
     ),
 )
 
@@ -115,10 +116,8 @@ sfs["nom"] = Hist(
         np.square(mfs["data"].errors / mfs["mc"]["nom"].values)
         + np.square(
             GetSymmUncFromUpDown(
-                mfs["data"].values
-                / (mfs["mc"]["nom"].values + mfs["mc"]["nom"].errors),
-                mfs["data"].values
-                / (mfs["mc"]["nom"].values - mfs["mc"]["nom"].errors),
+                mfs["data"].values / mfs["mc"]["nom"].values_up(),
+                mfs["data"].values / mfs["mc"]["nom"].values_down(),
             )
         )
     ),

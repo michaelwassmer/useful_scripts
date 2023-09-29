@@ -6,7 +6,7 @@ The input is a ROOT file containing all the necessary templates from the monotop
 1. ROOT file needs to be read. Histograms need to read and converted to numpy.
 2. Summarize necessary MC backgrounds in one total background template including systematics
 3. Top tag efficiencies are calculated for MC and data in the ttbar control regions as well as corresponding data/mc scale factors.
-3. Save the top tag efficiencies and scale factors in a json.
+4. Save the top tag efficiencies and scale factors in a json.
 """
 
 # imports
@@ -283,3 +283,35 @@ for syst in systs:
 print(tes["mc"]["nom"])
 print(tes["data"]["nom"])
 print(sfs["nom"])
+
+#########
+### 4 ###
+#########
+
+# dump information into json
+json_dict = {}
+
+# top tag efficiency in mc
+json_dict["eff_mc"] = {
+    "edges": list(tes["mc"]["nom"].edges),
+    "values": list(tes["mc"]["nom"].values),
+    "uncertainties": list(tes["mc"]["nom"].errors),
+}
+
+# top tag efficiency in data
+json_dict["eff_data"] = {
+    "edges": list(tes["data"]["nom"].edges),
+    "values": list(tes["data"]["nom"].values),
+    "uncertainties": list(tes["data"]["nom"].errors),
+}
+
+# data/mc top tag scale factor
+json_dict["sf_data_mc"] = {
+    "edges": list(sfs["nom"].edges),
+    "values": list(sfs["nom"].values),
+    "uncertainties": list(sfs["nom"].errors),
+}
+
+# save information in json file
+with open("top_tag.json", "w") as outfile:
+    json.dump(json_dict, outfile, indent=4)
