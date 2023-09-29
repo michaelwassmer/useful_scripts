@@ -14,6 +14,8 @@ import sys
 from Helper import *
 import numpy as np
 import json
+import correctionlib.schemav2 as cs
+import gzip
 
 #########
 ### 1 ###
@@ -312,6 +314,37 @@ json_dict["sf_data_mc"] = {
     "uncertainties": list(sfs["nom"].errors),
 }
 
+cset = cs.CorrectionSet(
+    schema_version=2,
+    description="Top tag efficiencies and data/mc scale factors",
+    corrections=[
+        CreateCorrection(
+            "eff_mc",
+            list(tes["mc"]["nom"].edges),
+            list(tes["mc"]["nom"].values),
+            list(tes["mc"]["nom"].values_up()),
+            list(tes["mc"]["nom"].values_down()),
+        ),
+        CreateCorrection(
+            "eff_data",
+            list(tes["data"]["nom"].edges),
+            list(tes["data"]["nom"].values),
+            list(tes["data"]["nom"].values_up()),
+            list(tes["data"]["nom"].values_down()),
+        ),
+        CreateCorrection(
+            "sf_data_mc",
+            list(sfs["nom"].edges),
+            list(sfs["nom"].values),
+            list(sfs["nom"].values_up()),
+            list(sfs["nom"].values_down()),
+        ),
+    ],
+)
+
+with gzip.open("top_tag.json.gz", "wt") as fout:
+        fout.write(cset.json(exclude_unset=True, indent=4))
+
 # save information in json file
-with open("top_tag.json", "w") as outfile:
-    json.dump(json_dict, outfile, indent=4)
+# with open("top_tag.json", "w") as outfile:
+#     json.dump(json_dict, outfile, indent=4)

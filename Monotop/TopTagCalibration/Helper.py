@@ -1,3 +1,6 @@
+# necessary for type annotations with forward references
+from __future__ import annotations
+
 # uproot to read ROOT files
 import uproot as up
 
@@ -9,6 +12,9 @@ import numpy as np
 
 # to make copies of Hist class
 import copy
+
+# correctionlib
+import correctionlib.schemav2 as cs
 
 
 # container for histogram information
@@ -34,7 +40,7 @@ class Hist:
         else:
             self.errors = np.zeros(len(self.edges) - 1)
 
-    def __str__(self):
+    def __str__(self) -> str:
         str = f"""
         name: {self.name}
         edges: {self.edges}
@@ -44,7 +50,7 @@ class Hist:
         return str
 
     def add(
-        self, hist_to_add, add_uncs_quad: bool = False, factor: float = 1.0
+        self, hist_to_add: Hist, add_uncs_quad: bool = False, factor: float = 1.0
     ) -> None:
         assert np.array_equal(self.edges, hist_to_add.edges)
         # assert len(self.values) == len(hist_to_add.values)
@@ -74,7 +80,7 @@ class Hist:
     def values_down(self) -> np.ndarray:
         return self.values - self.errors
 
-    def copy(self, new_name: str = ""):
+    def copy(self, new_name: str = "") -> Hist:
         clone = copy.deepcopy(self)
         if new_name != "":
             clone.name = new_name
@@ -146,3 +152,63 @@ def GetEffStatErrors(
         hist_selected, hist_all, alpha=0.32, method="beta"
     )
     return up, down
+
+
+def CreateCorrection(
+    label: str,
+    edges: list[float],
+    nom_values: list[float],
+    up_values: list[float],
+    down_values: list[float],
+):
+    correction = cs.Correction(
+        name=label,
+        version=1,
+        inputs=[
+            cs.Variable(
+                name="pt",
+                type="real",
+                description="Transverse momentum (pt) of the AK15 jet",
+            ),
+            cs.Variable(name="syst", type="string", description="Systematic"),
+        ],
+        output=cs.Variable(
+            name="value",
+            type="real",
+            description="value",
+        ),
+        data=cs.Category(
+            nodetype="category",
+            input="syst",
+            content=[
+                cs.CategoryItem(
+                    key="Up",
+                    value=cs.Binning(
+                        nodetype="binning",
+                        input="pt",
+                        edges=edges,
+                        content=up_values,
+                        flow="clamp",
+                    ),
+                ),
+                cs.CategoryItem(
+                    key="Down",
+                    value=cs.Binning(
+                        nodetype="binning",
+                        input="pt",
+                        edges=edges,
+                        content=down_values,
+                        flow="clamp",
+                    ),
+                ),
+            ],
+            default=cs.Binning(
+                nodetype="binning",
+                input="pt",
+                edges=edges,
+                content=nom_values,
+                flow="clamp",
+            ),
+        ),
+    )
+    return correction
