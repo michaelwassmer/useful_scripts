@@ -229,4 +229,4 @@ cset = cs.CorrectionSet(
 )
 
 with gzip.open("qcd_mistag.json.gz", "wt") as fout:
-        fout.write(cset.json(exclude_unset=True, indent=4))
+    fout.write(cset.json(exclude_unset=True, indent=4))
