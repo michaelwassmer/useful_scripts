@@ -14,6 +14,7 @@ from Helper import *
 import numpy as np
 import json
 import correctionlib.schemav2 as cs
+import gzip
 
 #########
 ### 1 ###
@@ -199,6 +200,33 @@ json_dict["sf_data_mc"] = {
     "uncertainties": list(sfs["nom"].errors),
 }
 
-# save information in json file
-with open("qcd_mistag.json", "w") as outfile:
-    json.dump(json_dict, outfile, indent=4)
+cset = cs.CorrectionSet(
+    schema_version=2,
+    description="QCD mistag fractions and data/mc scale factors",
+    corrections=[
+        CreateCorrection(
+            "eff_mc",
+            list(mfs["mc"]["nom"].edges),
+            list(mfs["mc"]["nom"].values),
+            list(mfs["mc"]["nom"].values_up()),
+            list(mfs["mc"]["nom"].values_down()),
+        ),
+        CreateCorrection(
+            "eff_data",
+            list(mfs["data"].edges),
+            list(mfs["data"].values),
+            list(mfs["data"].values_up()),
+            list(mfs["data"].values_down()),
+        ),
+        CreateCorrection(
+            "sf_data_mc",
+            list(sfs["nom"].edges),
+            list(sfs["nom"].values),
+            list(sfs["nom"].values_up()),
+            list(sfs["nom"].values_down()),
+        ),
+    ],
+)
+
+with gzip.open("qcd_mistag.json.gz", "wt") as fout:
+        fout.write(cset.json(exclude_unset=True, indent=4))
