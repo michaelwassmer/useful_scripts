@@ -14,6 +14,7 @@ import sys
 from Helper import *
 import numpy as np
 import json
+import correctionlib
 import correctionlib.schemav2 as cs
 import gzip
 
@@ -51,10 +52,6 @@ if len(sys.argv) == 3:
 # electron or muon channel to use
 lep = "electron"
 
-# qcd mistag scale factors for now
-# still needs to be exchanged to actually read from json file
-qcd_mistag_sfs = [2.40, 1.97, 2.16, 2.05]
-
 # processes to consider as relevant backgrounds
 procs = ["ttbar", "SingleTop", "WJetsToLNu_stitched", "diboson", "qcd", "DYJetsToLL"]
 
@@ -71,6 +68,21 @@ hists = ReadTemplates(
     systs,
 )
 
+# edges of the histograms should be similar in all histograms otherwise this method does not work
+# therefore just use one histogram to set this variable
+edges = np.array(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges)
+
+# qcd mistag scale factors from correctionlib
+qcd_mistag_correction = correctionlib.CorrectionSet.from_file("qcd_mistag.json.gz")
+
+# get representative AK15 jet pts to retrieve qcd mistag sfs from correctionlib object
+# therefore, just increase the edges of the jet pt histograms by 1 and remove the last entry
+rep_jet_pts = (edges + 1.0)[:-1]
+# then evalute the correctionlib object to get the qcdmistag sfs
+qcd_mistag_sfs = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "nom")
+qcd_mistag_sfs_up = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Up")
+qcd_mistag_sfs_down = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Down")
+
 #########
 ### 2 ###
 #########
@@ -81,15 +93,28 @@ hists = ReadTemplates(
 # create histograms to hold summed background processes
 hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"] = Hist(
     f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom",
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges,
+    edges,
 )
 hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"] = Hist(
     f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom",
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges,
+    edges,
 )
 
 # loop over processes and add them to the summed background histograms
 for proc in procs:
+    # copies of the nominal histograms for QCDMistag systematics
+    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__QCDMistagUp"] = hists[
+        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
+    ].copy()
+    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__QCDMistagDown"] = hists[
+        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
+    ].copy()
+    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__QCDMistagUp"] = hists[
+        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
+    ].copy()
+    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__QCDMistagDown"] = hists[
+        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
+    ].copy()
     # apply qcd mistag scale factor for qcd jet events in the tag region
     hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"].apply_sfs(qcd_mistag_sfs)
     hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"].add(
@@ -100,20 +125,29 @@ for proc in procs:
     )
 
 # do the same but for systematic variations of the MC processes
-for syst in systs:
+for syst in systs + ["QCDMistag"]:
     for var in ["Up", "Down"]:
         hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"] = Hist(
             f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}",
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__{syst+var}"].edges,
+            edges,
         )
         hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}"] = Hist(
             f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}",
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__{syst+var}"].edges,
+            edges,
         )
         for proc in procs:
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"].apply_sfs(
-                qcd_mistag_sfs
-            )
+            if syst + var == "QCDMistagUp":
+                hists[
+                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
+                ].apply_sfs(qcd_mistag_sfs_up)
+            elif syst + var == "QCDMistagDown":
+                hists[
+                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
+                ].apply_sfs(qcd_mistag_sfs_down)
+            else:
+                hists[
+                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
+                ].apply_sfs(qcd_mistag_sfs)
             hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"].add(
                 hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"], False
             )
@@ -151,7 +185,7 @@ tes["data"] = {}
 # statistical uncertainties are calculated as crude max uncertainty estimation from template errors
 tes["mc"]["nom"] = Hist(
     "tes_mc_nom",
-    mc_top_cr_tag_hist.edges,
+    edges,
     mc_top_cr_tag_hist.values / mc_top_cr_all_hist.values,
     GetSymmUncFromUpDown(
         mc_top_cr_tag_hist.values_up() / mc_top_cr_all_hist.values_down(),
@@ -182,7 +216,7 @@ data_top_cr_all_hist.add(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"], True,
 # nominal data efficiency
 tes["data"]["nom"] = Hist(
     "tes_data_nom",
-    data_top_cr_tag_hist.edges,
+    edges,
     data_top_cr_tag_hist.values / data_top_cr_all_hist.values,
     GetSymmUncFromUpDown(
         data_top_cr_tag_hist.values_up() / data_top_cr_all_hist.values_down(),
@@ -193,7 +227,7 @@ tes["data"]["nom"] = Hist(
 sfs = {}
 sfs["nom"] = Hist(
     "sfs_nom",
-    tes["data"]["nom"].edges,
+    edges,
     tes["data"]["nom"].values / tes["mc"]["nom"].values,
     np.sqrt(
         np.square(tes["data"]["nom"].errors / tes["mc"]["nom"].values)
@@ -207,20 +241,21 @@ sfs["nom"] = Hist(
 )
 
 # loop over systematics
-for syst in systs:
+for syst in systs + ["QCDMistag"]:
     # loop over the two variations
     for var in ["Up", "Down"]:
-        mc_top_cr_tag_syst_name = mc_top_cr_tag_name.replace("nom", syst + var)
-        mc_top_cr_all_syst_name = mc_top_cr_all_name.replace("nom", syst + var)
-        mc_top_cr_tag_syst_hist = hists[mc_top_cr_tag_syst_name]
-        mc_top_cr_all_syst_hist = hists[mc_top_cr_all_syst_name]
-        # calculate the top tag efficiency for systematically variated mc
-        tes["mc"][syst + var] = Hist(
-            f"tes_mc_{syst}{var}",
-            mc_top_cr_tag_syst_hist.edges,
-            mc_top_cr_tag_syst_hist.values / mc_top_cr_all_syst_hist.values,
-            np.zeros_like(mc_top_cr_tag_syst_hist.values),
-        )
+        if syst != "QCDMistag":
+            mc_top_cr_tag_syst_name = mc_top_cr_tag_name.replace("nom", syst + var)
+            mc_top_cr_all_syst_name = mc_top_cr_all_name.replace("nom", syst + var)
+            mc_top_cr_tag_syst_hist = hists[mc_top_cr_tag_syst_name]
+            mc_top_cr_all_syst_hist = hists[mc_top_cr_all_syst_name]
+            # calculate the top tag efficiency for systematically variated mc
+            tes["mc"][syst + var] = Hist(
+                f"tes_mc_{syst}{var}",
+                edges,
+                mc_top_cr_tag_syst_hist.values / mc_top_cr_all_syst_hist.values,
+                np.zeros_like(mc_top_cr_tag_syst_hist.values),
+            )
 
         # data effiencies analogously to the nominal case but now for systematically variated MC
         data_top_cr_tag_syst_name = data_top_cr_tag_name
@@ -245,27 +280,36 @@ for syst in systs:
 
         tes["data"][syst + var] = Hist(
             f"tes_data_{syst+var}",
-            data_top_cr_tag_syst_hist.edges,
+            edges,
             data_top_cr_tag_syst_hist.values / data_top_cr_all_syst_hist.values,
             np.zeros_like(data_top_cr_tag_syst_hist.values),
         )
         print(tes["data"][syst + var])
         # calculate mistag scale factors for systematically variated mc
-        sfs[syst + var] = Hist(
-            f"sfs_{syst}{var}",
-            tes["data"][syst + var].edges,
-            tes["data"][syst + var].values / tes["mc"][syst + var].values,
-            np.zeros_like(tes["data"][syst + var].values),
-        )
-    # calculate the total error of the nominal mistag fraction by adding the single uncertainties in quadrature
-    tes["mc"]["nom"].errors = np.sqrt(
-        np.square(
-            GetSymmUncFromUpDown(
-                tes["mc"][syst + "Up"].values, tes["mc"][syst + "Down"].values
+        if syst == "QCDMistag":
+            sfs[syst + var] = Hist(
+                f"sfs_{syst}{var}",
+                edges,
+                tes["data"][syst + var].values / tes["mc"]["nom"].values,
+                np.zeros_like(tes["data"][syst + var].values),
             )
+        else:
+            sfs[syst + var] = Hist(
+                f"sfs_{syst}{var}",
+                edges,
+                tes["data"][syst + var].values / tes["mc"][syst + var].values,
+                np.zeros_like(tes["data"][syst + var].values),
+            )
+    # calculate the total error of the nominal mistag fraction by adding the single uncertainties in quadrature
+    if syst != "QCDMistag":
+        tes["mc"]["nom"].errors = np.sqrt(
+            np.square(
+                GetSymmUncFromUpDown(
+                    tes["mc"][syst + "Up"].values, tes["mc"][syst + "Down"].values
+                )
+            )
+            + np.square(tes["mc"]["nom"].errors)
         )
-        + np.square(tes["mc"]["nom"].errors)
-    )
     tes["data"]["nom"].errors = np.sqrt(
         np.square(
             GetSymmUncFromUpDown(
@@ -295,21 +339,21 @@ json_dict = {}
 
 # top tag efficiency in mc
 json_dict["eff_mc"] = {
-    "edges": list(tes["mc"]["nom"].edges),
+    "edges": list(edges),
     "values": list(tes["mc"]["nom"].values),
     "uncertainties": list(tes["mc"]["nom"].errors),
 }
 
 # top tag efficiency in data
 json_dict["eff_data"] = {
-    "edges": list(tes["data"]["nom"].edges),
+    "edges": list(edges),
     "values": list(tes["data"]["nom"].values),
     "uncertainties": list(tes["data"]["nom"].errors),
 }
 
 # data/mc top tag scale factor
 json_dict["sf_data_mc"] = {
-    "edges": list(sfs["nom"].edges),
+    "edges": list(edges),
     "values": list(sfs["nom"].values),
     "uncertainties": list(sfs["nom"].errors),
 }
@@ -320,21 +364,21 @@ cset = cs.CorrectionSet(
     corrections=[
         CreateCorrection(
             "eff_mc",
-            list(tes["mc"]["nom"].edges),
+            list(edges),
             list(tes["mc"]["nom"].values),
             list(tes["mc"]["nom"].values_up()),
             list(tes["mc"]["nom"].values_down()),
         ),
         CreateCorrection(
             "eff_data",
-            list(tes["data"]["nom"].edges),
+            list(edges),
             list(tes["data"]["nom"].values),
             list(tes["data"]["nom"].values_up()),
             list(tes["data"]["nom"].values_down()),
         ),
         CreateCorrection(
             "sf_data_mc",
-            list(sfs["nom"].edges),
+            list(edges),
             list(sfs["nom"].values),
             list(sfs["nom"].values_up()),
             list(sfs["nom"].values_down()),
@@ -343,7 +387,7 @@ cset = cs.CorrectionSet(
 )
 
 with gzip.open("top_tag.json.gz", "wt") as fout:
-        fout.write(cset.json(exclude_unset=True, indent=4))
+    fout.write(cset.json(exclude_unset=True, indent=4))
 
 # save information in json file
 # with open("top_tag.json", "w") as outfile:
