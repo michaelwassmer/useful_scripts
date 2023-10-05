@@ -49,8 +49,6 @@ if len(sys.argv) == 3:
     systs = sys.argv[2]
     systs = systs.split(",")
 
-# electron or muon channel to use
-lep = "electron"
 
 # processes to consider as relevant backgrounds
 procs = ["ttbar", "SingleTop", "WJetsToLNu_stitched", "diboson", "qcd", "DYJetsToLL"]
@@ -63,10 +61,26 @@ dictionary structure:
 """
 hists = ReadTemplates(
     infile,
-    [f"CR_TT_{lep}"],
+    ["CR_TT_electron", "CR_TT_muon"],
     procs + ["data_obs"],
     systs,
 )
+
+# add together electron and muon channels
+hists_combined = {}
+for label in hists.keys():
+    if "CR_TT_muon" in label:
+        continue
+    new_label = label.replace("CR_TT_electron", "CR_TT_lepton")
+    hists_combined[new_label] = hists[label].copy()
+    hists_combined[new_label].add(
+        hists[label.replace("CR_TT_electron", "CR_TT_muon")], True
+    )
+
+hists.update(hists_combined)
+
+# electron or muon or lepton (combination of ele and mu) channel
+lep = "lepton"
 
 # edges of the histograms should be similar in all histograms otherwise this method does not work
 # therefore just use one histogram to set this variable
@@ -154,8 +168,8 @@ for syst in systs + ["QCDMistag"]:
             hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}"].add(
                 hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}"], False
             )
-        # print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"])
-        # print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}"])
+# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"])
+# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"])
 
 #########
 ### 3 ###
@@ -207,11 +221,17 @@ data_top_cr_tag_hist.name = f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__data_obs__nom
 data_top_cr_all_hist = hists[data_top_cr_all_name].copy()
 data_top_cr_all_hist.name = f"CR_TT_{lep}_AK15Jet_Pt_0_Top__data_obs__nom"
 
+# print(data_top_cr_tag_hist)
+# print(data_top_cr_all_hist)
+
 # now subtract the summed background templates
 data_top_cr_tag_hist.add(
     hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"], True, -1.0
 )
 data_top_cr_all_hist.add(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"], True, -1.0)
+
+# print(data_top_cr_tag_hist)
+# print(data_top_cr_all_hist)
 
 # nominal data efficiency
 tes["data"]["nom"] = Hist(
