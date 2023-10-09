@@ -159,9 +159,20 @@ for syst in systs + ["QCDMistag"]:
                     f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
                 ].apply_sfs(qcd_mistag_sfs_down)
             else:
-                hists[
-                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
-                ].apply_sfs(qcd_mistag_sfs)
+                if f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}" in hists:
+                    hists[
+                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(qcd_mistag_sfs)
+                else:
+                    hists[
+                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
+                    ] = hists[
+                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
+                    ].copy()
+                if not f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}" in hists:
+                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}"] = hists[
+                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
+                    ].copy()
             hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"].add(
                 hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"], False
             )
