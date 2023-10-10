@@ -1,19 +1,19 @@
 """
 This script calculates the data/mc scale factors of the top-jet tagging efficiency for the mono-top analysis.
-The top tag efficiency is calculated based on the two ttbar control regions, which are quite pure in events containing genuine top jets.
+The top tag efficiency is calculated based on the two ttbar control regions (ele and muon channel), which are enriched in events containing genuine top jets.
 The input is a ROOT file containing all the necessary templates from the monotop analysis and an optional comma-separated list of systematic uncertainties.
 
+Workflow of the script:
 1. ROOT file needs to be read. Histograms need to read and converted to numpy.
-2. Summarize necessary MC backgrounds in one total background template including systematics
+2. Summarize necessary MC backgrounds in one total background template including systematics.
 3. Top tag efficiencies are calculated for MC and data in the ttbar control regions as well as corresponding data/mc scale factors.
-4. Save the top tag efficiencies and scale factors in a json.
+4. Save the top tag efficiencies and scale factors in a correctionlib json format.
 """
 
 # imports
 import sys
 from Helper import *
 import numpy as np
-import json
 import correctionlib
 import correctionlib.schemav2 as cs
 import gzip
@@ -36,25 +36,24 @@ elif len(sys.argv) > 3:
 
 # input ROOT file
 infile = sys.argv[1]
-if ".root" not in infile:
+if not ".root" in infile:
     raise Exception(
         "Given input file does not seem to be a ROOT file, which typically ends with '.root'",
         f"Given input file was >>> {infile} <<<",
     )
 
 # list of systematic uncertainties to consider
-# systematics are given as a comma-separated list
+# systematics are given as a comma-separated list and are split using the comma
 systs = []
 if len(sys.argv) == 3:
     systs = sys.argv[2]
     systs = systs.split(",")
 
-
 # processes to consider as relevant backgrounds
 procs = ["ttbar", "SingleTop", "WJetsToLNu_stitched", "diboson", "qcd", "DYJetsToLL"]
 
 """
-read the necessary histograms, i.e. in gamma+jets CR, and put them into a dictionary
+read the necessary histograms, i.e. in ttbar CRs, and put them into a dictionary
 dictionary structure:
     key=name of histogram
     value=Hist object i.e. (edges, values, errors)
@@ -66,7 +65,7 @@ hists = ReadTemplates(
     systs,
 )
 
-# add together electron and muon channels
+# add together electron and muon channels for more statistics
 hists_combined = {}
 for label in hists.keys():
     if "CR_TT_muon" in label:
@@ -76,24 +75,23 @@ for label in hists.keys():
     hists_combined[new_label].add(
         hists[label.replace("CR_TT_electron", "CR_TT_muon")], True
     )
-
 hists.update(hists_combined)
 
 # electron or muon or lepton (combination of ele and mu) channel
 lep = "lepton"
 
-# edges of the histograms should be similar in all histograms otherwise this method does not work
-# therefore just use one histogram to set this variable
+# edges of the histograms are assumed to be similar in all histograms, otherwise this method does not work
+# therefore just use one histogram to set the edges
 edges = np.array(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges)
 
-# qcd mistag scale factors from correctionlib
+# load qcd mistag scale factors from correctionlib
 qcd_mistag_correction = correctionlib.CorrectionSet.from_file("qcd_mistag.json.gz")
 
 # get representative AK15 jet pts to retrieve qcd mistag sfs from correctionlib object
 # therefore, just increase the edges of the jet pt histograms by 1 and remove the last entry
 rep_jet_pts = (edges + 1.0)[:-1]
 # then evalute the correctionlib object to get the qcdmistag sfs
-qcd_mistag_sfs = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "nom")
+qcd_mistag_sfs = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Nom")
 qcd_mistag_sfs_up = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Up")
 qcd_mistag_sfs_down = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Down")
 
@@ -131,6 +129,7 @@ for proc in procs:
     ].copy()
     # apply qcd mistag scale factor for qcd jet events in the tag region
     hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"].apply_sfs(qcd_mistag_sfs)
+    # add single backgrounds to the summed background
     hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"].add(
         hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"], True
     )
@@ -138,7 +137,7 @@ for proc in procs:
         hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"], True
     )
 
-# do the same but for systematic variations of the MC processes
+# do the same as before but for systematic variations of the MC processes
 for syst in systs + ["QCDMistag"]:
     for var in ["Up", "Down"]:
         hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"] = Hist(
@@ -255,6 +254,7 @@ tes["data"]["nom"] = Hist(
     ),
 )
 
+# nominal scale factor
 sfs = {}
 sfs["nom"] = Hist(
     "sfs_nom",
@@ -277,7 +277,11 @@ for syst in systs + ["QCDMistag"]:
     for var in ["Up", "Down"]:
         if syst != "QCDMistag":
             mc_top_cr_tag_syst_name = mc_top_cr_tag_name.replace("nom", syst + var)
+            if not mc_top_cr_tag_syst_name in hists:
+                mc_top_cr_tag_syst_name = mc_top_cr_tag_name
             mc_top_cr_all_syst_name = mc_top_cr_all_name.replace("nom", syst + var)
+            if not mc_top_cr_all_syst_name in hists:
+                mc_top_cr_all_syst_name = mc_top_cr_all_name
             mc_top_cr_tag_syst_hist = hists[mc_top_cr_tag_syst_name]
             mc_top_cr_all_syst_hist = hists[mc_top_cr_all_syst_name]
             # calculate the top tag efficiency for systematically variated mc
@@ -365,30 +369,7 @@ print(sfs["nom"])
 ### 4 ###
 #########
 
-# dump information into json
-json_dict = {}
-
-# top tag efficiency in mc
-json_dict["eff_mc"] = {
-    "edges": list(edges),
-    "values": list(tes["mc"]["nom"].values),
-    "uncertainties": list(tes["mc"]["nom"].errors),
-}
-
-# top tag efficiency in data
-json_dict["eff_data"] = {
-    "edges": list(edges),
-    "values": list(tes["data"]["nom"].values),
-    "uncertainties": list(tes["data"]["nom"].errors),
-}
-
-# data/mc top tag scale factor
-json_dict["sf_data_mc"] = {
-    "edges": list(edges),
-    "values": list(sfs["nom"].values),
-    "uncertainties": list(sfs["nom"].errors),
-}
-
+# create correctionlib object
 cset = cs.CorrectionSet(
     schema_version=2,
     description="Top tag efficiencies and data/mc scale factors",
@@ -417,9 +398,6 @@ cset = cs.CorrectionSet(
     ],
 )
 
+# save top tag efficiencies and scale factors
 with gzip.open("top_tag.json.gz", "wt") as fout:
     fout.write(cset.json(exclude_unset=True, indent=4))
-
-# save information in json file
-# with open("top_tag.json", "w") as outfile:
-#     json.dump(json_dict, outfile, indent=4)
