@@ -62,6 +62,7 @@ dictionary structure:
 """
 hists = ReadTemplates(
     infile,
+    ["AK15Jet_Pt_0"],
     ["CR_TT_electron", "CR_TT_muon"],
     procs + ["data_obs"],
     systs,

@@ -91,6 +91,7 @@ class Hist:
 # keys that need to be present in the name of the histogram
 def ReadTemplates(
     infile: str,
+    var_search_keys: list[str],
     cat_search_keys: list[str],
     proc_search_keys: list[str],
     syst_search_keys: list[str],
@@ -102,6 +103,9 @@ def ReadTemplates(
         for name, type in rfile.classnames().items():
             # only consider histograms i.e. TH1D
             if type != "TH1D":
+                continue
+            # only consider templates showing a specific variable
+            if not KeepHist(name, var_search_keys):
                 continue
             # only consider templates in specific categories
             if not KeepHist(name, cat_search_keys):
