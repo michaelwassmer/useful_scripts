@@ -5,7 +5,7 @@ The input is a ROOT file containing all the necessary templates from the monotop
 
 Workflow of the script:
 1. ROOT file needs to be read. Histograms need to read and converted to numpy.
-2. Summarize necessary QCD-jet MC backgrounds in one total QCD-jet background template including systematics. Do the same for top-jet MC backgrounds.
+2. Summarize necessary qcd-jet and b-jet MC backgrounds in one total notop-jet background template including systematics. Do the same for top-jet MC backgrounds.
 3. Top tag efficiencies are calculated for MC and data in the ttbar control regions as well as corresponding data/mc scale factors.
 4. Save the top tag efficiencies and scale factors in a correctionlib json format.
 """
@@ -53,6 +53,12 @@ if len(sys.argv) == 3:
 procs = ["ttbar", "SingleTop", "WJetsToLNu_stitched", "diboson", "qcd", "DYJetsToLL"]
 # processes that can result in top jets
 top_procs = ["ttbar", "SingleTop"]
+# jet types besides top jet
+jet_types = ["QCD", "B"]
+
+systs_calib = ["QCDMistag", "BJetMistag", "BJetNorm"]
+
+cr = "CR_W"
 
 """
 read the necessary histograms, i.e. in ttbar CRs, and put them into a dictionary
@@ -63,7 +69,7 @@ dictionary structure:
 hists = ReadTemplates(
     infile,
     ["AK15Jet_Pt_0"],
-    ["CR_TT_electron", "CR_TT_muon"],
+    [f"{cr}_electron", f"{cr}_muon"],
     procs + ["data_obs"],
     systs,
 )
@@ -71,12 +77,12 @@ hists = ReadTemplates(
 # add together electron and muon channels for more statistics
 hists_combined = {}
 for label in hists.keys():
-    if "CR_TT_muon" in label:
+    if f"{cr}_muon" in label:
         continue
-    new_label = label.replace("CR_TT_electron", "CR_TT_lepton")
+    new_label = label.replace(f"{cr}_electron", f"{cr}_lepton")
     hists_combined[new_label] = hists[label].copy()
     hists_combined[new_label].add(
-        hists[label.replace("CR_TT_electron", "CR_TT_muon")], True
+        hists[label.replace(f"{cr}_electron", f"{cr}_muon")], True
     )
 hists.update(hists_combined)
 
@@ -85,7 +91,7 @@ lep = "lepton"
 
 # edges of the histograms are assumed to be similar in all histograms, otherwise this method does not work
 # therefore just use one histogram to set the edges
-edges = np.array(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges)
+edges = np.array(hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__ttbar__nom"].edges)
 
 # load qcd mistag scale factors from correctionlib
 qcd_mistag_correction = correctionlib.CorrectionSet.from_file("qcd_mistag.json.gz")
@@ -98,6 +104,12 @@ qcd_mistag_sfs = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Nom"
 qcd_mistag_sfs_up = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Up")
 qcd_mistag_sfs_down = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, "Down")
 
+bjet_sfs_up = np.full_like(rep_jet_pts, 1.5)
+bjet_sfs_down = np.full_like(rep_jet_pts, 0.5)
+
+bjet_norm_up = np.full_like(rep_jet_pts, 1.0)
+bjet_norm_down = np.full_like(rep_jet_pts, 1.0)
+
 #########
 ### 2 ###
 #########
@@ -108,88 +120,126 @@ qcd_mistag_sfs_down = qcd_mistag_correction["sf_data_mc"].evaluate(rep_jet_pts, 
 # start with the nominal MC backgrounds
 
 # create histograms to hold summed qcd-jet background processes
-hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"] = Hist(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom",
+hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"] = Hist(
+    f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom",
     edges,
 )
-hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"] = Hist(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom",
+hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"] = Hist(
+    f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom",
     edges,
 )
 
 # loop over processes and add them to the summed background histograms
 for proc in procs:
-    # copies of the nominal histograms for QCDMistag systematics
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__QCDMistagUp"] = hists[
-        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
-    ].copy()
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__QCDMistagDown"] = hists[
-        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
-    ].copy()
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__QCDMistagUp"] = hists[
-        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
-    ].copy()
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__QCDMistagDown"] = hists[
-        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
-    ].copy()
-    # apply qcd mistag scale factor for qcd jet events in the tag region
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"].apply_sfs(qcd_mistag_sfs)
-    # add single backgrounds to the summed background
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"].add(
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"], True
-    )
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"].add(
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"], True
-    )
+    for jet_type in jet_types:
+        for syst_calib in systs_calib:
+            for var in ["Up", "Down"]:
+                # copies of the nominal histograms for calib systematics
+                hists[
+                    f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst_calib}{var}"
+                ] = hists[
+                    f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__nom"
+                ].copy()
+                hists[
+                    f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst_calib}{var}"
+                ] = hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__nom"].copy()
+        # apply qcd mistag scale factor for qcd jet events in the tag region
+        if jet_type == "QCD":
+            hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__nom"].apply_sfs(
+                qcd_mistag_sfs
+            )
+        # add single backgrounds to the summed background
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"].add(
+            hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__nom"], True
+        )
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"].add(
+            hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__nom"], True
+        )
 
 # print("QCD jets in tag or no tag")
-# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"])
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"])
 # print("QCD jets in tag")
-# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"])
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"])
 
 # do the same as before but for systematic variations of the MC processes
-for syst in systs + ["QCDMistag"]:
+for syst in systs + systs_calib:
     for var in ["Up", "Down"]:
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"] = Hist(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}",
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"] = Hist(
+            f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}",
             edges,
         )
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}"] = Hist(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}",
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__{syst+var}"] = Hist(
+            f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__{syst+var}",
             edges,
         )
         for proc in procs:
-            if syst + var == "QCDMistagUp":
-                hists[
-                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
-                ].apply_sfs(qcd_mistag_sfs_up)
-            elif syst + var == "QCDMistagDown":
-                hists[
-                    f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
-                ].apply_sfs(qcd_mistag_sfs_down)
-            else:
-                if f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}" in hists:
+            for jet_type in jet_types:
+                if syst + var == "QCDMistagUp" and jet_type == "QCD":
                     hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
-                    ].apply_sfs(qcd_mistag_sfs)
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(qcd_mistag_sfs_up)
+                elif syst + var == "QCDMistagDown" and jet_type == "QCD":
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(qcd_mistag_sfs_down)
+                elif syst + var == "BJetNormUp" and jet_type == "B":
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_norm_up)
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_norm_up)
+                elif syst + var == "BJetNormDown" and jet_type == "B":
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_norm_down)
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_norm_down)
+                elif syst + var == "BJetMistagUp" and jet_type == "B":
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_sfs_up)
+                elif syst + var == "BJetMistagDown" and jet_type == "B":
+                    hists[
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ].apply_sfs(bjet_sfs_down)
                 else:
+                    if (
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                        in hists
+                        and jet_type == "QCD"
+                    ):
+                        hists[
+                            f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                        ].apply_sfs(qcd_mistag_sfs)
+                    else:
+                        hists[
+                            f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                        ] = hists[
+                            f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__nom"
+                        ].copy()
+                    if (
+                        not f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"
+                        in hists
+                    ):
+                        hists[
+                            f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"
+                        ] = hists[
+                            f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__nom"
+                        ].copy()
+                hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"].add(
                     hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"
-                    ] = hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__nom"
-                    ].copy()
-                if not f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}" in hists:
-                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}"] = hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__nom"
-                    ].copy()
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"].add(
-                hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__{proc}__{syst+var}"], False
-            )
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__{syst+var}"].add(
-                hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__{proc}__{syst+var}"], False
-            )
-# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"])
-# print(hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD__Bkg__nom"])
+                        f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
+                    ],
+                    False,
+                )
+                hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__{syst+var}"].add(
+                    hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"],
+                    False,
+                )
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"])
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"])
 
 ### top-jet processes ###
 
@@ -197,70 +247,70 @@ for syst in systs + ["QCDMistag"]:
 # start with the nominal MC backgrounds
 
 # create histograms to hold summed top-jet processes
-# region independent of tag
-hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"] = Hist(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom",
+# category independent of tag
+hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"] = Hist(
+    f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom",
     edges,
 )
-# region with tag
-hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"] = Hist(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom",
+# category with tag
+hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"] = Hist(
+    f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom",
     edges,
 )
 # add top processes together
 for proc in top_procs:
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"].add(
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], True
+    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"].add(
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], True
     )
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"].add(
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"], True
+    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"].add(
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"], True
     )
 
 # repeat the same for systematics
-for syst in systs + ["QCDMistag"]:
+for syst in systs + systs_calib:
     for var in ["Up", "Down"]:
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"] = Hist(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}",
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"] = Hist(
+            f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}",
             edges,
         )
-        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"] = Hist(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}",
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"] = Hist(
+            f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}",
             edges,
         )
         for proc in top_procs:
             # for QCD-jet mistag systematics use the nominal top-jet templates
-            if syst == "QCDMistag":
-                hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
-                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], False
+            if syst in systs_calib:
+                hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
+                    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], False
                 )
-                hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"].add(
-                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"], False
+                hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"].add(
+                    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"], False
                 )
             # for all other systematics use the variations if available, otherwise use nominal
             else:
-                if f"CR_TT_{lep}_AK15Jet_Pt_0_Top__{proc}__{syst+var}" in hists:
-                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
-                        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__{proc}__{syst+var}"],
+                if f"{cr}_{lep}_AK15Jet_Pt_0_Top__{proc}__{syst+var}" in hists:
+                    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
+                        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__{proc}__{syst+var}"],
                         False,
                     )
                 else:
-                    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
-                        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], False
+                    hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__{syst+var}"].add(
+                        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top__{proc}__nom"], False
                     )
-                if f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__{syst+var}" in hists:
+                if f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__{syst+var}" in hists:
                     hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"
+                        f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"
                     ].add(
                         hists[
-                            f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__{syst+var}"
+                            f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__{syst+var}"
                         ],
                         False,
                     )
                 else:
                     hists[
-                        f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"
+                        f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__{syst+var}"
                     ].add(
-                        hists[f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"],
+                        hists[f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__{proc}__nom"],
                         False,
                     )
 
@@ -274,9 +324,9 @@ tes = {}
 # start with mc efficiencies
 
 # mc template in ttbar CR with a tag
-mc_top_cr_tag_name = f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"
+mc_top_cr_tag_name = f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__TopBkg__nom"
 # mc template in ttbar CR irrespective of tag or not
-mc_top_cr_all_name = f"CR_TT_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"
+mc_top_cr_all_name = f"{cr}_{lep}_AK15Jet_Pt_0_Top__TopBkg__nom"
 
 # top-jet MC template in ttbar CR with a tag
 mc_top_cr_tag_hist = hists[mc_top_cr_tag_name]
@@ -308,21 +358,21 @@ tes["mc"]["nom"] = Hist(
 # in the region independent of tag or not, the MC prediction for the top-jet processes is used since it's usually quite good
 
 # first get copies of data templates in tag region
-data_top_cr_tag_name = f"CR_TT_{lep}_AK15Jet_Pt_0_Any_Tagged__data_obs__nom"
+data_top_cr_tag_name = f"{cr}_{lep}_AK15Jet_Pt_0_Any_Tagged__data_obs__nom"
 # in region independent of tag or not, use MC prediction
 data_top_cr_all_name = mc_top_cr_all_name
 
 data_top_cr_tag_hist = hists[data_top_cr_tag_name].copy(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__data_obs__nom"
+    f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__data_obs__nom"
 )
 
 data_top_cr_all_hist = hists[data_top_cr_all_name].copy(
-    f"CR_TT_{lep}_AK15Jet_Pt_0_Top__data_obs__nom"
+    f"{cr}_{lep}_AK15Jet_Pt_0_Top__data_obs__nom"
 )
 
 # now subtract the summed qcd-jet background templates in the tag region
 data_top_cr_tag_hist.add(
-    hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__nom"], True, -1.0
+    hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"], True, -1.0
 )
 
 print(data_top_cr_tag_hist)
@@ -357,10 +407,10 @@ sfs["nom"] = Hist(
 )
 
 # loop over systematics
-for syst in systs + ["QCDMistag"]:
+for syst in systs + systs_calib:
     # loop over the two variations
     for var in ["Up", "Down"]:
-        if syst != "QCDMistag":
+        if not (syst in systs_calib):
             mc_top_cr_tag_syst_name = mc_top_cr_tag_name.replace("nom", syst + var)
             if not mc_top_cr_tag_syst_name in hists:
                 mc_top_cr_tag_syst_name = mc_top_cr_tag_name
@@ -382,15 +432,15 @@ for syst in systs + ["QCDMistag"]:
         data_top_cr_all_syst_name = data_top_cr_all_name.replace("nom", syst + var)
 
         data_top_cr_tag_syst_hist = hists[data_top_cr_tag_syst_name].copy(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_Top_Tagged__data_obs__{syst+var}"
+            f"{cr}_{lep}_AK15Jet_Pt_0_Top_Tagged__data_obs__{syst+var}"
         )
 
         data_top_cr_all_syst_hist = hists[data_top_cr_all_syst_name].copy(
-            f"CR_TT_{lep}_AK15Jet_Pt_0_Top__data_obs__{syst+var}"
+            f"{cr}_{lep}_AK15Jet_Pt_0_Top__data_obs__{syst+var}"
         )
 
         data_top_cr_tag_syst_hist.add(
-            hists[f"CR_TT_{lep}_AK15Jet_Pt_0_QCD_Tagged__Bkg__{syst+var}"], False, -1.0
+            hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"], False, -1.0
         )
 
         tes["data"][syst + var] = Hist(
@@ -401,7 +451,7 @@ for syst in systs + ["QCDMistag"]:
         )
         print(tes["data"][syst + var])
         # calculate mistag scale factors for systematically variated mc
-        if syst == "QCDMistag":
+        if syst in systs_calib:
             sfs[syst + var] = Hist(
                 f"sfs_{syst}{var}",
                 edges,
@@ -416,7 +466,7 @@ for syst in systs + ["QCDMistag"]:
                 np.zeros_like(tes["data"][syst + var].values),
             )
     # calculate the total error of the nominal mistag fraction by adding the single uncertainties in quadrature
-    if syst != "QCDMistag":
+    if not (syst in systs_calib):
         tes["mc"]["nom"].errors = np.sqrt(
             np.square(
                 GetSymmUncFromUpDown(
