@@ -77,6 +77,9 @@ data_gjets_qcd_cr_all = hists["CR_Gamma_AK15Jet_Pt_0_Any__data_obs__nom"].copy(
     "CR_Gamma_AK15Jet_Pt_0_QCD__data_obs__nom"
 )
 
+# print(data_gjets_qcd_cr_tag)
+# print(data_gjets_qcd_cr_all)
+
 # names of necessary nominal MC templates for QCD mistag fraction
 # qcd-jet events
 mc_gjets_qcd_cr_tag_name = "CR_Gamma_AK15Jet_Pt_0_QCD_Tagged__G1Jet_Ptbinned__nom"
@@ -94,9 +97,15 @@ mc_gjets_b_cr_tag_hist = hists[mc_gjets_b_cr_tag_name]
 # gamma+jets b-jet MC template in gamma+jets CR irrespective of tag or not
 mc_gjets_b_cr_all_hist = hists[mc_gjets_b_cr_all_name]
 
+# print(mc_gjets_qcd_cr_tag_hist)
+# print(mc_gjets_qcd_cr_all_hist)
+
 # subtract b-jet contaminations from data in both regions
 data_gjets_qcd_cr_tag.add(mc_gjets_b_cr_tag_hist, True, -1)
 data_gjets_qcd_cr_all.add(mc_gjets_b_cr_all_hist, True, -1)
+
+# print(data_gjets_qcd_cr_tag)
+# print(data_gjets_qcd_cr_all)
 
 # calculate qcd mistag fraction in data by just dividing tag/all
 # statistical uncertainties are calculated from binomial confidence interval and then symmetrized
@@ -106,7 +115,9 @@ mfs["data"]["nom"] = Hist(
     data_gjets_qcd_cr_tag.edges,
     data_gjets_qcd_cr_tag.values / data_gjets_qcd_cr_all.values,
     GetSymmUncFromUpDown(
-        *GetEffStatErrors(data_gjets_qcd_cr_tag.values, data_gjets_qcd_cr_all.values)
+        data_gjets_qcd_cr_tag.values_up() / data_gjets_qcd_cr_all.values_down(),
+        data_gjets_qcd_cr_tag.values_down() / data_gjets_qcd_cr_all.values_up()
+        # *GetEffStatErrors(data_gjets_qcd_cr_tag.values, data_gjets_qcd_cr_all.values)
     ),
 )
 
@@ -280,7 +291,7 @@ json_dict["sf_data_mc"] = {
 
 cset = cs.CorrectionSet(
     schema_version=2,
-    description="QCD mistag fractions and data/mc scale factors",
+    description="QCD-jet mistag fractions and data/mc scale factors",
     corrections=[
         CreateCorrection(
             "eff_mc",
