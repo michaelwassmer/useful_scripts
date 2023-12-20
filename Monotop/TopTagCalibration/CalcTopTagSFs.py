@@ -120,8 +120,8 @@ bjet_norm_down = np.full_like(rep_jet_pts, 1.0)
 # start with the nominal MC backgrounds
 
 # create histograms to hold summed qcd-jet background processes
-hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"] = Hist(
-    f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom",
+hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom"] = Hist(
+    f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom",
     edges,
 )
 hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"] = Hist(
@@ -149,7 +149,7 @@ for proc in procs:
                 qcd_mistag_sfs
             )
         # add single backgrounds to the summed background
-        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"].add(
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom"].add(
             hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__nom"], True
         )
         hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"].add(
@@ -159,13 +159,13 @@ for proc in procs:
 # print("QCD jets in tag or no tag")
 # print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"])
 # print("QCD jets in tag")
-# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"])
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom"])
 
 # do the same as before but for systematic variations of the MC processes
 for syst in systs + systs_calib:
     for var in ["Up", "Down"]:
-        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"] = Hist(
-            f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}",
+        hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__{syst+var}"] = Hist(
+            f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__{syst+var}",
             edges,
         )
         hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__{syst+var}"] = Hist(
@@ -228,7 +228,7 @@ for syst in systs + systs_calib:
                         ] = hists[
                             f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__nom"
                         ].copy()
-                hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"].add(
+                hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__{syst+var}"].add(
                     hists[
                         f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}_Tagged__{proc}__{syst+var}"
                     ],
@@ -238,7 +238,7 @@ for syst in systs + systs_calib:
                     hists[f"{cr}_{lep}_AK15Jet_Pt_0_{jet_type}__{proc}__{syst+var}"],
                     False,
                 )
-# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"])
+# print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom"])
 # print(hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop__Bkg__nom"])
 
 ### top-jet processes ###
@@ -372,7 +372,7 @@ data_top_cr_all_hist = hists[data_top_cr_all_name].copy(
 
 # now subtract the summed qcd-jet background templates in the tag region
 data_top_cr_tag_hist.add(
-    hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__nom"], True, -1.0
+    hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__nom"], True, -1.0
 )
 
 print(data_top_cr_tag_hist)
@@ -440,7 +440,7 @@ for syst in systs + systs_calib:
         )
 
         data_top_cr_tag_syst_hist.add(
-            hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged_Bkg__{syst+var}"], False, -1.0
+            hists[f"{cr}_{lep}_AK15Jet_Pt_0_NoTop_Tagged__Bkg__{syst+var}"], False, -1.0
         )
 
         tes["data"][syst + var] = Hist(
