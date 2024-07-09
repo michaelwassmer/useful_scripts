@@ -488,6 +488,7 @@ tes["data"]["nom"] = Hist(
 
 # nominal scale factor
 sfs = {}
+sfs_unc_sources = {}
 sfs["nom"] = Hist(
     "sfs_nom",
     edges,
@@ -497,6 +498,7 @@ sfs["nom"] = Hist(
         data_top_cr_tag_hist.values_down() / mc_top_cr_tag_hist.values_up(),
     ),
 )
+sfs_unc_sources["stat"] = Hist(f"sfs_stat_rel", sfs["nom"].edges, sfs["nom"].errors / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
 
 print(tes["mc"]["nom"])
 print(tes["data"]["nom"])
@@ -593,10 +595,14 @@ for syst in systs + systs_calib:
         )
         + np.square(sfs["nom"].errors)
     )
+    sfs_unc_sources[syst] = Hist(f"sfs_{syst}_rel", sfs["nom"].edges, GetSymmUncFromUpDown(sfs[syst + "Up"].values, sfs[syst + "Down"].values) / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
+    sfs_unc_sources["total"] = Hist(f"sfs_total_rel", sfs["nom"].edges, sfs["nom"].errors / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
 
 print(tes["mc"]["nom"])
 print(tes["data"]["nom"])
 print(sfs["nom"])
+for syst, hist in sfs_unc_sources.items():
+    print(f"| {syst} | " + " | ".join(f"{value} %" for value in list(np.round(100.*hist.values,1))) + "|")
 
 #########
 ### 5 ###

@@ -279,6 +279,7 @@ mfs["mc"]["nom"] = Hist(
 
 # dictionary to contain all the data/mc scale factors as Hist objects
 sfs = {}
+sfs_unc_sources = {}
 
 # nominal data/mc scale factor
 # statistical data uncertainty and statistical mc uncertainty are added in quadrature to obtain overall uncertainty
@@ -306,6 +307,7 @@ sfs["nom"] = Hist(
     ),
 )
 print(sfs["nom"])
+sfs_unc_sources["stat"] = Hist(f"sfs_stat_rel", sfs["nom"].edges, sfs["nom"].errors / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
 
 # repeat the calculations from above for systematic variations of mc
 # don't consider stat uncertainties of the systematic variations
@@ -390,12 +392,15 @@ for syst in systs + systs_bjets:
         )
         + np.square(sfs["nom"].errors)
     )
+    sfs_unc_sources[syst] = Hist(f"sfs_{syst}_rel", sfs["nom"].edges, GetSymmUncFromUpDown(sfs[syst + "Up"].values, sfs[syst + "Down"].values) / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
+    sfs_unc_sources["total"] = Hist(f"sfs_total_rel", sfs["nom"].edges, sfs["nom"].errors / sfs["nom"].values, np.zeros_like(sfs["nom"].errors))
 
 # printout
 print(mfs["mc"]["nom"])
 print(mfs["data"]["nom"])
 print(sfs["nom"])
-
+for syst, hist in sfs_unc_sources.items():
+    print(f"| {syst} | " + " | ".join(f"{value} %" for value in list(np.round(100.*hist.values,1))) + "|")
 #########
 ### 4 ###
 #########
