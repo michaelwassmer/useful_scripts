@@ -4,7 +4,21 @@ import gzip
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import mplhep as hep
 
+plt.style.use(hep.style.CMS)
+
+# dictionary linking era and corresponding integrated luminosity
+lumi_dict = {
+    "Run 2": 138,
+    "2018": 59.8,
+    "2017": 41.5,
+    "2016postVFP": 16.8,
+    "2016preVFP": 19.5,
+    "2016": 36.6,
+}
+
+# argument parser would be nicer, but no time ...
 # three input arguments need to be provided
 if len(sys.argv) != 4:
     raise RuntimeError("Number of input arguments is not correct! Exiting ... ")
@@ -78,7 +92,7 @@ print(correction_dict)
 
 # plotting
 fig, (ax1, ax2) = plt.subplots(2, 1)
-fig.suptitle(f"{jet_type}, {era}")
+fig.suptitle(f"{jet_type} class", x=0.3, y=0.85, size="small")
 
 x_edges = correction_dict["eff_mc"]["Nom"]["Edges"]
 # calculate x values of points from edges -> centers between edges (same in all corrections)
@@ -104,7 +118,7 @@ ax1.errorbar(
     yerr=y_error_eff_mc,
     marker="o",
     fmt="o",
-    label="MC",
+    label="Simulation",
 )
 # data efficiency
 y_values_eff_data = correction_dict["eff_data"]["Nom"]["Values"]
@@ -134,6 +148,7 @@ ax1.set_ylim(
 )
 ax1.set_ylabel("Efficiency")
 ax1.set_xticks(x_edges)
+ax1.xaxis.set_minor_locator(plt.NullLocator())
 ax1.grid(axis="y")
 ax1.legend()
 
@@ -152,7 +167,7 @@ ax2.errorbar(
     fmt="o",
     color="black",
 )
-ax2.set_xlabel("AK15 jet pt (GeV)")
+ax2.set_xlabel("AK15 jet $p_{\\mathrm{T}}$ (GeV)")
 ax2.set_xticks(x_edges)
 if jet_type == "Top-jet":
     min = 0.5
@@ -166,6 +181,10 @@ ax2.set_ylim(
 )
 ax2.set_ylabel("Data/MC SF")
 ax2.grid(axis="y")
+ax2.xaxis.set_minor_locator(plt.NullLocator())
+
+# add CMS label
+hep.cms.label("Preliminary", loc=0, data=True, lumi=lumi_dict.get(era, -999), year=era, ax=ax1)
 
 # save plot as pdf
 plt.savefig(f"{jet_type}_{era}.pdf")
