@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# usage: source CalcTopTaggerCalibration_norm.sh /path/to/hogwarts/template/file.root {2018,2017,2016postVFP,2016preVFP}
+
 INFILE=$1
 YEAR=$2
 
