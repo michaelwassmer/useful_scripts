@@ -7,6 +7,7 @@ import numpy as np
 import mplhep as hep
 
 plt.style.use(hep.style.CMS)
+plt.style.use({"font.size": 22})
 
 # dictionary linking era and corresponding integrated luminosity
 lumi_dict = {
@@ -150,7 +151,7 @@ ax1.set_ylabel("Efficiency")
 ax1.set_xticks(x_edges)
 ax1.xaxis.set_minor_locator(plt.NullLocator())
 ax1.grid(axis="y")
-ax1.legend()
+ax1.legend(loc="lower right")
 
 # scale factors
 y_values_sf = correction_dict["sf_data_mc"]["Nom"]["Values"]
